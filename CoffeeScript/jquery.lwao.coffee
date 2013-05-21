@@ -33,7 +33,7 @@ $.fn.extend
                 #
                 # NOTE: Every "%s" must have a corresponding following key
                 #       in this array!
-                '<li data-value="%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></li>'
+                '<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>'
                 'qId'
                 'authorName'
                 'quote'
@@ -163,8 +163,7 @@ $.fn.extend
         # list.
         #
         $(document).on 'click', '.lwao_result li', ->
-            value = $(this).attr("data-value")
-            document.location = "/quote/" + value
+            return true
         
         
         #
