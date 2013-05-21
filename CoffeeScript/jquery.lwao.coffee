@@ -39,13 +39,15 @@ $.fn.extend
             ]
             container: $(".lwao_result")
             containerHtml:
-                "<ul>\n" +
+                "<ul class=\"list\">\n" +
                 "[RESULTS]" +
                 "</ul>\n"
+            backdrop: $(".lwao_backdrop")
             selectionValue: 'qid'
             stringMaxLength: 50
             stringEllipsis: " ..."
             requestWait: 300
+            fadeSpeed: 150
             debug: true
         
         
@@ -65,43 +67,54 @@ $.fn.extend
             if settings.resultDisplay[0].match(/%s/g).length isnt (settings.resultDisplay.length - 1)
                 return false
             
-            html = ""
-            for obj, index in result
-                thisHtml = settings.resultDisplay[0]
+            if result.length > 0
+                html = ""
+                for obj, index in result
+                    thisHtml = settings.resultDisplay[0]
+
+                    # A non-global regex will perform the matches one-by-one.
+                    for string, index in settings.resultDisplay
+                        continue if index is 0
+
+                        replaceValue = obj[string]
+                        if settings.stringMaxLength > 0
+                            if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
+                              replaceValue = replaceValue.substr(0, settings.stringMaxLength - settings.stringEllipsis.length) + settings.stringEllipsis
+
+                        thisHtml = thisHtml.replace "%s", replaceValue
+
+                    html += thisHtml
+
+                # Create proper DOM...
+                html = settings.containerHtml.replace "[RESULTS]", html
+
+                # Add backdrop if not there.
+                top = inputField.offset().top + inputField.closest("div").height()
+                right = $(".quotes_container").css("padding-right")
+                settings.container.css
+                    position: 'absolute'
+                    top: top
+                    right: right
+                .fadeIn(settings.fadeSpeed).html html
+                settings.backdrop.fadeIn settings.fadeSpeed
                 
-                # A non-global regex will perform the matches one-by-one.
-                for string, index in settings.resultDisplay
-                    continue if index is 0
-                    
-                    replaceValue = obj[string]
-                    if settings.stringMaxLength > 0
-                        if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
-                          replaceValue = replaceValue.substr(0, settings.stringMaxLength - settings.stringEllipsis.length) + settings.stringEllipsis
-                         
-                    thisHtml = thisHtml.replace "%s", replaceValue
-                    
-                html += thisHtml
-            
-            # Create proper DOM...
-            html = settings.containerHtml.replace "[RESULTS]", html
-            
-            #$(".lwao_result").css
-            #    top: $(this).offset().bottom # place at bottom of input element
-            #    right: 0
-            top = inputField.offset().top + inputField.height()
-            right = -Math.abs(inputField.width())
-            settings.container.show().html html
+            # No items
+            else
+                settings.container.fadeout settings.fadeSpeed
+                settings.container.fadeout settings.fadeSpeed
 
 
         # Instantiate the timout variable and lock this instance to a reference.
-        requestTimeout = null
-            
-         
+        requestTimeout    = null
+        requestInProgress = false
+        
+        
         #
         # Perform request
         #
         runAjax = (query, inputField) ->
-            ret = {}
+            return false if requestInProgress is true
+            
             settings.ajaxData.searchTerm = query
 
             $.ajax
@@ -109,6 +122,9 @@ $.fn.extend
                 url: '/ajax/search'
                 async: true
                 data: settings.ajaxData
+                
+                beforeSend: ->
+                    requestInProgress = true
 
                 success: (response) ->
                     if response.status is 0 and response.result.length > 0
@@ -118,6 +134,7 @@ $.fn.extend
                     console?.log message
 
                 complete: ->
+                    requestInProgress = false
                     requestTimeout = null
                 
                 
@@ -128,7 +145,8 @@ $.fn.extend
             query = inputField.val()
             
             if query.length < settings.minLength
-                settings.container.hide()
+                settings.container.fadeOut settings.fadeSpeed
+                settings.backdrop.fadeOut settings.fadeSpeed
                 return false
             
             if requestTimeout is null
@@ -147,3 +165,11 @@ $.fn.extend
             $(this).on 'keyup', ->
                 evaluateAjax $(this)
                 
+                
+        #
+        # Attach general closing events.
+        #
+        $("body").on 'click', ->
+            settings.container.fadeOut settings.fadeSpeed
+            settings.backdrop.fadeOut settings.fadeSpeed
+        
