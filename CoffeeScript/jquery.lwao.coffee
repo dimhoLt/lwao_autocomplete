@@ -21,7 +21,7 @@ $.fn.extend
         settings =
             minLength: 3
             ajaxUrl: ''
-            ajaxMethod: 'POST'
+            ajaxType: 'POST'
             ajaxData: {}
             inputVarName: 'searchTerm'
             resultDisplay: [
@@ -33,7 +33,8 @@ $.fn.extend
                 #
                 # NOTE: Every "%s" must have a corresponding following key
                 #       in this array!
-                '<li><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></li>'
+                '<li data-value="%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></li>'
+                'qId'
                 'authorName'
                 'quote'
             ]
@@ -43,7 +44,6 @@ $.fn.extend
                 "[RESULTS]" +
                 "</ul>\n"
             backdrop: $(".lwao_backdrop")
-            selectionValue: 'qid'
             stringMaxLength: 50
             stringEllipsis: " ..."
             requestWait: 300
@@ -76,7 +76,7 @@ $.fn.extend
                     for string, index in settings.resultDisplay
                         continue if index is 0
 
-                        replaceValue = obj[string]
+                        replaceValue = obj[string]                          
                         if settings.stringMaxLength > 0
                             if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
                               replaceValue = replaceValue.substr(0, settings.stringMaxLength - settings.stringEllipsis.length) + settings.stringEllipsis
@@ -118,8 +118,8 @@ $.fn.extend
             settings.ajaxData.searchTerm = query
 
             $.ajax
-                type: 'POST'
-                url: '/ajax/search'
+                url: settings.ajaxUrl
+                type: settings.ajaxType
                 async: true
                 data: settings.ajaxData
                 
@@ -156,10 +156,19 @@ $.fn.extend
                 return false
                 
             runAjax query, inputField
+            
+            
+        #
+        # Perform action when clicking on an item in the built autocomplete
+        # list.
+        #
+        $(document).on 'click', '.lwao_result li', ->
+            value = $(this).attr("data-value")
+            document.location = "/quote/" + value
         
         
         #
-        # Attach autocomplete.
+        # Attach autocomplete to all inputs in set.
         #
         $(this).each ->
             $(this).on 'keyup', ->
