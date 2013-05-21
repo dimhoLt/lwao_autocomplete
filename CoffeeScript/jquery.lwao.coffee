@@ -33,15 +33,18 @@ $.fn.extend
                 #
                 # NOTE: Every "%s" must have a corresponding following key
                 #       in this array!
-                '<li><span class="quote">%s</span></span class="author">by %s</span></li>'
-                'quote'
+                '<li><span class="author">by %s</span><span class="quote">%s</span></li>'
                 'authorName'
+                'quote'
             ]
+            container: $(".lwao_result")
             containerHtml:
-                "<ul class=\"lwao_results\">\n" +
+                "<ul>\n" +
                 "[RESULTS]" +
                 "</ul>\n"
             selectionValue: 'qid'
+            stringMaxLength: 50
+            stringEllipsis: " ..."
             requestWait: 300
             debug: true
         
@@ -58,10 +61,7 @@ $.fn.extend
         #
         # Attach list with results to search object.
         #
-        attachList = (result) ->
-            container = $(".lwao_results")
-            return false if container.length is 0
-            
+        attachList = (result, inputField) ->
             if settings.resultDisplay[0].match(/%s/g).length isnt (settings.resultDisplay.length - 1)
                 return false
             
@@ -73,11 +73,24 @@ $.fn.extend
                 for string, index in settings.resultDisplay
                     continue if index is 0
                     
-                    thisHtml = thisHtml.replace "%s", obj[string]
+                    replaceValue = obj[string]
+                    if settings.stringMaxLength > 0
+                        if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
+                          replaceValue = replaceValue.substr(0, settings.stringMaxLength - settings.stringEllipsis.length) + settings.stringEllipsis
+                         
+                    thisHtml = thisHtml.replace "%s", replaceValue
                     
                 html += thisHtml
-                
+            
+            # Create proper DOM...
             html = settings.containerHtml.replace "[RESULTS]", html
+            
+            #$(".lwao_result").css
+            #    top: $(this).offset().bottom # place at bottom of input element
+            #    right: 0
+            top = inputField.offset().top + inputField.height()
+            right = -Math.abs(inputField.width())
+            settings.container.show().html html
 
 
         # Instantiate the timout variable and lock this instance to a reference.
@@ -87,7 +100,7 @@ $.fn.extend
         #
         # Perform request
         #
-        runAjax = (query) ->
+        runAjax = (query, inputField) ->
             ret = {}
             settings.ajaxData.searchTerm = query
 
@@ -99,7 +112,7 @@ $.fn.extend
 
                 success: (response) ->
                     if response.status is 0 and response.result.length > 0
-                        attachList response.result
+                        attachList response.result, inputField
 
                 error: (xhr, message, code) ->
                     console?.log message
@@ -111,17 +124,20 @@ $.fn.extend
         #
         # Check if we should perform another AJAX-request.
         #
-        evaluateAjax = (query) ->
-            return false if query.length < settings.minLength
+        evaluateAjax = (inputField) ->
+            query = inputField.val()
+            
+            if query.length < settings.minLength
+                settings.container.hide()
+                return false
             
             if requestTimeout is null
                 requestTimeout = new Date().getTime()
 
             else if new Date().getTime() - requestTimeout < settings.requestWait
-                console.log("Nope. Don't run.")
                 return false
                 
-            runAjax query
+            runAjax query, inputField
         
         
         #
@@ -129,5 +145,5 @@ $.fn.extend
         #
         $(this).each ->
             $(this).on 'keyup', ->
-                evaluateAjax $(this).val()
+                evaluateAjax $(this)
                 
