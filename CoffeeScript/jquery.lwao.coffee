@@ -33,7 +33,7 @@ $.fn.extend
                 #
                 # NOTE: Every "%s" must have a corresponding following key
                 #       in this array!
-                '<li><span class="author">by %s</span><span class="quote">%s</span></li>'
+                '<li><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></li>'
                 'authorName'
                 'quote'
             ]
