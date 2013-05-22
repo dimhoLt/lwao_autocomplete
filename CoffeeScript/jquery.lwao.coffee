@@ -50,6 +50,7 @@ $.fn.extend
             requestWait: 300
             fadeSpeed: 150
             highlightSearchTerm: true
+            showResultFixed: false
             debug: true
         
         
@@ -134,8 +135,11 @@ $.fn.extend
                 # Add backdrop if not there.
                 top = inputField.offset().top + inputField.closest("div").height()
                 right = $(".quotes_container").css("padding-right")
+                position = 'absolute'
+                if settings.showResultFixed
+                    position = 'fixed'
                 settings.container.css
-                    position: 'absolute'
+                    position: position
                     top: top
                     right: right
                 .fadeIn(settings.fadeSpeed).html html
