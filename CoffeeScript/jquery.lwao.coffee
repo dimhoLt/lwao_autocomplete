@@ -44,10 +44,12 @@ $.fn.extend
                 "[RESULTS]" +
                 "</ul>\n"
             backdrop: $(".lwao_backdrop")
-            stringMaxLength: 50
-            stringEllipsis: " ..."
+            stringMaxLength: 80
+            stringEllipsis: "..."
+            padEllipsis: true
             requestWait: 300
             fadeSpeed: 150
+            highlightSearchTerm: true
             debug: true
         
         
@@ -67,6 +69,8 @@ $.fn.extend
             if settings.resultDisplay[0].match(/%s/g).length isnt (settings.resultDisplay.length - 1)
                 return false
             
+            searchTerm = inputField.val()
+            
             if result.length > 0
                 html = ""
                 for obj, index in result
@@ -75,11 +79,50 @@ $.fn.extend
                     # A non-global regex will perform the matches one-by-one.
                     for string, index in settings.resultDisplay
                         continue if index is 0
-
-                        replaceValue = obj[string]                          
+                        
+                        replaceValue = obj[string]
+                        
                         if settings.stringMaxLength > 0
                             if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
-                              replaceValue = replaceValue.substr(0, settings.stringMaxLength - settings.stringEllipsis.length) + settings.stringEllipsis
+                                if settings.highlightSearchTerm
+                                    # Find the place in the string where the
+                                    # search term is.
+                                    substrStartPoint = 0
+                                    searchTermOffset = replaceValue.indexOf searchTerm
+
+                                    searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength
+                                    if searchTermOffset > -1 and searchTermOccurenceIsBeyondView
+                                        # Include the entire search term + 10
+                                        # chars.
+                                        substrStartPoint = searchTermOffset - (searchTerm.length + 10)
+
+                                    # If we start from somewhere in the string,
+                                    # we'll need to ellips it at the beginning as
+                                    # well.
+                                    if substrStartPoint > 0
+                                        initialEllipsis = settings.stringEllipsis
+                                        if settings.padEllipsis
+                                            initialEllipsis = " " + initialEllipsis
+                                    
+                                # Find out how much of the string should be
+                                # removed.
+                                substrLength = settings.stringMaxLength
+                                
+                                initialEllipsis = "" if initialEllipsis is undefined
+                                substrLength -= initialEllipsis.length
+                                    
+                                endEllipsis = settings.stringEllipsis
+                                if settings.padEllipsis
+                                    endEllipsis += " "
+                                    substrLength -= endEllipsis.length
+                                
+                                # Perform the cropping...
+                                replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis
+                                
+                        # And finally highlight the result.
+                        if settings.highlightSearchTerm
+                            searchTermRegex = new RegExp(searchTerm, 'ig')
+                            replaceValue = replaceValue.replace(searchTermRegex, "<strong>" + searchTerm + "</strong>")
 
                         thisHtml = thisHtml.replace "%s", replaceValue
 
