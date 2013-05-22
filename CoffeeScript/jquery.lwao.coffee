@@ -49,6 +49,9 @@ $.fn.extend
                 'quote'
             ]
             
+            # Text that is shown if no results are available.
+            noResultsHtml: '<span class="noResults">Couldn\'t find anything... sorry =(</span>'
+            
             # The container in which the generated result HTML is put.
             container: $(".lwao_result")
             
@@ -61,7 +64,7 @@ $.fn.extend
                 "</ul>\n"
                 
             # Whether or not to use backdrop.
-            useBackdrop: true
+            # useBackdrop: true
             
             # The backdrop object.
             backdrop: $(".lwao_backdrop")
@@ -115,87 +118,81 @@ $.fn.extend
             
             searchTerm = inputField.val()
             
-            if result.length > 0
-                html = ""
-                for obj, index in result
-                    thisHtml = settings.resultDisplay[0]
+            html = ""
+            for obj, index in result
+                thisHtml = settings.resultDisplay[0]
 
-                    # A non-global regex will perform the matches one-by-one.
-                    for string, index in settings.resultDisplay
-                        continue if index is 0
-                        
-                        replaceValue = obj[string]
-                        
-                        if settings.stringMaxLength > 0
-                            if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
-                                substrStartPoint = 0
-                                
-                                initialEllipsis = ""
-                                endEllipsis = ""
-                                if settings.highlightSearchTerm
-                                    # Find the place in the string where the
-                                    # search term is.
-                                    searchTermOffset = replaceValue.indexOf searchTerm
+                # A non-global regex will perform the matches one-by-one.
+                for string, index in settings.resultDisplay
+                    continue if index is 0
 
-                                    searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength
-                                    if searchTermOffset > -1 and searchTermOccurenceIsBeyondView
-                                        # Include the entire search term +
-                                        # searchTermHighlightPadding chars
-                                        substrStartPoint = (searchTermOffset + searchTerm.length + settings.searchTermHighlightPadding) - settings.stringMaxLength
+                    replaceValue = obj[string]
 
-                                    # If we start from somewhere in the string,
-                                    # we'll need to ellips it at the beginning as
-                                    # well.
-                                    if substrStartPoint > 0
-                                        initialEllipsis = settings.stringEllipsis
-                                        if settings.padEllipsis
-                                            initialEllipsis = " " + initialEllipsis
-                                    
-                                # Find out how much of the string should be
-                                # removed.
-                                substrLength = settings.stringMaxLength
-                                substrLength -= initialEllipsis.length
-                                
-                                # Only apply the final ellipsis if we haven't
-                                # pushed the start too far ahead.
-                                if replaceValue.length - substrStartPoint > settings.stringMaxLength
-                                    endEllipsis = settings.stringEllipsis
+                    if settings.stringMaxLength > 0
+                        if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
+                            substrStartPoint = 0
+
+                            initialEllipsis = ""
+                            endEllipsis = ""
+                            if settings.highlightSearchTerm
+                                # Find the place in the string where the
+                                # search term is.
+                                searchTermOffset = replaceValue.indexOf searchTerm
+
+                                searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength
+                                if searchTermOffset > -1 and searchTermOccurenceIsBeyondView
+                                    # Include the entire search term +
+                                    # searchTermHighlightPadding chars
+                                    substrStartPoint = (searchTermOffset + searchTerm.length + settings.searchTermHighlightPadding) - settings.stringMaxLength
+
+                                # If we start from somewhere in the string,
+                                # we'll need to ellips it at the beginning as
+                                # well.
+                                if substrStartPoint > 0
+                                    initialEllipsis = settings.stringEllipsis
                                     if settings.padEllipsis
-                                        endEllipsis += " "
-                                        substrLength -= endEllipsis.length
-                                
-                                # Perform the cropping...
-                                replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis
-                                
-                        # And finally highlight the result.
-                        if settings.highlightSearchTerm
-                            searchTermRegex = new RegExp("("+ searchTerm + ")", 'ig')
-                            replaceValue = replaceValue.replace(searchTermRegex, "<strong>$1</strong>")
+                                        initialEllipsis = " " + initialEllipsis
 
-                        thisHtml = thisHtml.replace "%s", replaceValue
+                            # Find out how much of the string should be
+                            # removed.
+                            substrLength = settings.stringMaxLength
+                            substrLength -= initialEllipsis.length
 
-                    html += thisHtml
+                            # Only apply the final ellipsis if we haven't
+                            # pushed the start too far ahead.
+                            if replaceValue.length - substrStartPoint > settings.stringMaxLength
+                                endEllipsis = settings.stringEllipsis
+                                if settings.padEllipsis
+                                    endEllipsis += " "
+                                    substrLength -= endEllipsis.length
 
-                # Create proper DOM...
-                html = settings.wrapperHtml.replace "[RESULTS]", html
+                            # Perform the cropping...
+                            replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis
 
-                # Add backdrop if not there.
-                top = inputField.offset().top + inputField.closest("div").height()
-                right = $(".quotes_container").css("padding-right")
-                position = 'absolute'
-                if settings.showResultFixed
-                    position = 'fixed'
-                settings.container.css
-                    position: position
-                    top: top
-                    right: right
-                .fadeIn(settings.fadeSpeed).html html
-                settings.backdrop.fadeIn settings.fadeSpeed
-                
-            # No items
-            else
-                settings.container.fadeout settings.fadeSpeed
-                settings.container.fadeout settings.fadeSpeed
+                    # And finally highlight the result.
+                    if settings.highlightSearchTerm
+                        searchTermRegex = new RegExp("("+ searchTerm + ")", 'ig')
+                        replaceValue = replaceValue.replace(searchTermRegex, "<strong>$1</strong>")
+
+                    thisHtml = thisHtml.replace "%s", replaceValue
+
+                html += thisHtml
+
+            # Create proper DOM...
+            html = settings.wrapperHtml.replace "[RESULTS]", html
+
+            # Add backdrop if not there.
+            top = inputField.offset().top + inputField.closest("div").height()
+            right = $(".quotes_container").css("padding-right")
+            position = 'absolute'
+            if settings.showResultFixed
+                position = 'fixed'
+            settings.container.css
+                position: position
+                top: top
+                right: right
+            .fadeIn(settings.fadeSpeed).html html
+            settings.backdrop.fadeIn settings.fadeSpeed
 
 
         # Instantiate the timout variable and lock this instance to a reference.
@@ -223,6 +220,9 @@ $.fn.extend
                 success: (response) ->
                     if response.status is 0 and response.result.length > 0
                         attachList response.result, inputField
+                        
+                    else
+                        settings.container.html settings.noResultsHtml
 
                 error: (xhr, message, code) ->
                     console?.log message
