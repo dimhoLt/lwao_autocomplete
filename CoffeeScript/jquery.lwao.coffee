@@ -85,10 +85,13 @@ $.fn.extend
                         
                         if settings.stringMaxLength > 0
                             if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
+                                substrStartPoint = 0
+                                
+                                initialEllipsis = ""
+                                endEllipsis = ""
                                 if settings.highlightSearchTerm
                                     # Find the place in the string where the
                                     # search term is.
-                                    substrStartPoint = 0
                                     searchTermOffset = replaceValue.indexOf searchTerm
 
                                     searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength
@@ -108,16 +111,18 @@ $.fn.extend
                                 # Find out how much of the string should be
                                 # removed.
                                 substrLength = settings.stringMaxLength
-                                
-                                initialEllipsis = "" if initialEllipsis is undefined
                                 substrLength -= initialEllipsis.length
-                                    
-                                endEllipsis = settings.stringEllipsis
-                                if settings.padEllipsis
-                                    endEllipsis += " "
-                                    substrLength -= endEllipsis.length
+                                
+                                # Only apply the final ellipsis if we haven't
+                                # pushed the start too far ahead.
+                                if replaceValue.length - substrStartPoint > settings.stringMaxLength
+                                    endEllipsis = settings.stringEllipsis
+                                    if settings.padEllipsis
+                                        endEllipsis += " "
+                                        substrLength -= endEllipsis.length
                                 
                                 # Perform the cropping...
+                                console.log substrLength
                                 replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis
                                 
                         # And finally highlight the result.
