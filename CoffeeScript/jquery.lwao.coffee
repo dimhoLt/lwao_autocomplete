@@ -19,39 +19,81 @@ $.fn.extend
     
         # Default settings
         settings =
+            # The least amount of characters before AJAX is triggered.
             minLength: 3
+            
+            # URL of the AJAX call.
             ajaxUrl: ''
+            
+            # Method in AJAX call.
             ajaxType: 'POST'
+            
+            # Extra data in AJAX call, in addition to what's in the input field.
             ajaxData: {}
+            
+            # The amount of time to wait before a new AJAX-request is allowed.
+            requestWait: 300
+            
+            # The server variable name that holds the value of the input field.
             inputVarName: 'searchTerm'
+            
+            # The string created for every match from the server. The first
+            # key is the HTML. It should contain "%s"-string with replace
+            # values. The following keys should then be, in order, the key names
+            # from the server result object that should replace the
+            # "%s"-strings.
             resultDisplay: [
-                # The first value is the string to place. "%s"-occurrences will
-                # be replaced by the following indexes.
-                #
-                # The following strings are the values expected in the AJAX
-                # result JSON object.
-                #
-                # NOTE: Every "%s" must have a corresponding following key
-                #       in this array!
                 '<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>'
                 'qId'
                 'authorName'
                 'quote'
             ]
+            
+            # The container in which the generated result HTML is put.
             container: $(".lwao_result")
-            containerHtml:
+            
+            # The wrapper HTML holds a "[RESULTS]"-string which is replaced by
+            # the generated HTML from the server result. This is to make it
+            # easier to build lists.
+            wrapperHtml:
                 "<ul class=\"list\">\n" +
                 "[RESULTS]" +
                 "</ul>\n"
+                
+            # Whether or not to use backdrop.
+            useBackdrop: true
+            
+            # The backdrop object.
             backdrop: $(".lwao_backdrop")
+            
+            # The max length of the server result strings to be shown in the
+            # result list.
             stringMaxLength: 80
-            searchTermHighlightPadding: 10
-            stringEllipsis: "..."
-            padEllipsis: true
-            requestWait: 300
-            fadeSpeed: 150
+            
+            # If set to true, the script will find the occurrence of the
+            # matching input value in the server result, forward the string to
+            # it's location and highlight it in the results list.
             highlightSearchTerm: true
+            
+            # The amount of characters to be included after the highlighted
+            # result to give the result proper context.
+            searchTermHighlightPadding: 10
+            
+            # If the result string is cropped, the ellipsis string will be
+            # shown after (or before) where actual text has been removed.
+            stringEllipsis: "..."
+            
+            # Whether or not to pad the ellipsis with a space.
+            padEllipsis: true
+            
+            # The amount of time for the fade animation to run.
+            fadeSpeed: 150
+            
+            # Whether or not the result lists should be positioned 'fixed'
+            # instead of 'absolute' (which is default).
             showResultFixed: false
+            
+            # If in debug mode, more debug data is output.
             debug: true
         
         
@@ -135,7 +177,7 @@ $.fn.extend
                     html += thisHtml
 
                 # Create proper DOM...
-                html = settings.containerHtml.replace "[RESULTS]", html
+                html = settings.wrapperHtml.replace "[RESULTS]", html
 
                 # Add backdrop if not there.
                 top = inputField.offset().top + inputField.closest("div").height()
