@@ -45,6 +45,7 @@ $.fn.extend
                 "</ul>\n"
             backdrop: $(".lwao_backdrop")
             stringMaxLength: 80
+            searchTermHighlightPadding: 10
             stringEllipsis: "..."
             padEllipsis: true
             requestWait: 300
@@ -96,9 +97,9 @@ $.fn.extend
 
                                     searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength
                                     if searchTermOffset > -1 and searchTermOccurenceIsBeyondView
-                                        # Include the entire search term + 10
-                                        # chars.
-                                        substrStartPoint = searchTermOffset - (searchTerm.length + 10)
+                                        # Include the entire search term +
+                                        # searchTermHighlightPadding chars
+                                        substrStartPoint = (searchTermOffset + searchTerm.length + settings.searchTermHighlightPadding) - settings.stringMaxLength
 
                                     # If we start from somewhere in the string,
                                     # we'll need to ellips it at the beginning as
@@ -122,13 +123,12 @@ $.fn.extend
                                         substrLength -= endEllipsis.length
                                 
                                 # Perform the cropping...
-                                console.log substrLength
                                 replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis
                                 
                         # And finally highlight the result.
                         if settings.highlightSearchTerm
-                            searchTermRegex = new RegExp(searchTerm, 'ig')
-                            replaceValue = replaceValue.replace(searchTermRegex, "<strong>" + searchTerm + "</strong>")
+                            searchTermRegex = new RegExp("("+ searchTerm + ")", 'ig')
+                            replaceValue = replaceValue.replace(searchTermRegex, "<strong>$1</strong>")
 
                         thisHtml = thisHtml.replace "%s", replaceValue
 
