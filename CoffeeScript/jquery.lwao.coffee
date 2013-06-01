@@ -198,6 +198,7 @@ $.fn.extend
         # Instantiate the timout variable and lock this instance to a reference.
         requestTimeout    = null
         requestInProgress = false
+        latestSearchTerm  = null
         
         
         #
@@ -216,6 +217,7 @@ $.fn.extend
                 
                 beforeSend: ->
                     requestInProgress = true
+                    latestSearchTerm = query
 
                 success: (response) ->
                     if response.status is 0 and response.result.length > 0
@@ -236,11 +238,14 @@ $.fn.extend
         # Check if we should perform another AJAX-request.
         #
         evaluateAjax = (inputField) ->
-            query = inputField.val()
+            query = inputField.val().trim()
             
             if query.length < settings.minLength
                 settings.container.fadeOut settings.fadeSpeed
                 settings.backdrop.fadeOut settings.fadeSpeed
+                return false
+            
+            if query is latestSearchTerm
                 return false
             
             if requestTimeout is null

@@ -12,21 +12,31 @@
  http://en.wikipedia.org/wiki/MIT_License
  http://en.wikipedia.org/wiki/GNU_General_Public_License
  
- Compile through: $ coffee -b -o js -c CoffeeScript/jquery.lwao.coffee
+ Compile through: $ coffee -bw -o js -c CoffeeScript/jquery.lwao.coffee
 */
 $.fn.extend({
   lwao: function(options) {
-    var log, requestTimeout, runAjax, settings;
+    var attachList, evaluateAjax, log, requestInProgress, requestTimeout, runAjax, settings;
 
     settings = {
       minLength: 3,
       ajaxUrl: '',
-      ajaxMethod: 'POST',
+      ajaxType: 'POST',
       ajaxData: {},
-      inputVarName: 'searchTerm',
-      displayString: ['<span class="quote">%</span></span class="author">by %s</span>', 'quote', 'authorName'],
-      selectionValue: 'qid',
       requestWait: 300,
+      inputVarName: 'searchTerm',
+      resultDisplay: ['<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>', 'qId', 'authorName', 'quote'],
+      noResultsHtml: '<span class="noResults">Couldn\'t find anything... sorry =(</span>',
+      container: $(".lwao_result"),
+      wrapperHtml: "<ul class=\"list\">\n" + "[RESULTS]" + "</ul>\n",
+      backdrop: $(".lwao_backdrop"),
+      stringMaxLength: 80,
+      highlightSearchTerm: true,
+      searchTermHighlightPadding: 10,
+      stringEllipsis: "...",
+      padEllipsis: true,
+      fadeSpeed: 150,
+      showResultFixed: false,
       debug: true
     };
     settings = jQuery.extend(settings, options);
@@ -35,36 +45,134 @@ $.fn.extend({
         return typeof console !== "undefined" && console !== null ? console.log(msg) : void 0;
       }
     };
-    runAjax = function(query) {
-      var ret;
+    attachList = function(result, inputField) {
+      var endEllipsis, html, index, initialEllipsis, obj, position, replaceValue, right, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
 
-      if (query < settings.minLength) {
+      if (settings.resultDisplay[0].match(/%s/g).length !== (settings.resultDisplay.length - 1)) {
         return false;
       }
-      ret = {};
-      settings.ajaxData.searchTerm = query;
-      return $.ajax({
-        type: 'POST',
-        url: '/ajax/search',
-        async: true,
-        data: settings.ajaxData,
-        success: function(response) {
-          return console.log(response);
-        },
-        error: function(xhr, message, code) {
-          return console.log(message);
-        },
-        complete: function() {}
-      });
+      searchTerm = inputField.val();
+      html = "";
+      for (index = _i = 0, _len = result.length; _i < _len; index = ++_i) {
+        obj = result[index];
+        thisHtml = settings.resultDisplay[0];
+        _ref = settings.resultDisplay;
+        for (index = _j = 0, _len1 = _ref.length; _j < _len1; index = ++_j) {
+          string = _ref[index];
+          if (index === 0) {
+            continue;
+          }
+          replaceValue = obj[string];
+          if (settings.stringMaxLength > 0) {
+            if (replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length) {
+              substrStartPoint = 0;
+              initialEllipsis = "";
+              endEllipsis = "";
+              if (settings.highlightSearchTerm) {
+                searchTermOffset = replaceValue.indexOf(searchTerm);
+                searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength;
+                if (searchTermOffset > -1 && searchTermOccurenceIsBeyondView) {
+                  substrStartPoint = (searchTermOffset + searchTerm.length + settings.searchTermHighlightPadding) - settings.stringMaxLength;
+                }
+                if (substrStartPoint > 0) {
+                  initialEllipsis = settings.stringEllipsis;
+                  if (settings.padEllipsis) {
+                    initialEllipsis = " " + initialEllipsis;
+                  }
+                }
+              }
+              substrLength = settings.stringMaxLength;
+              substrLength -= initialEllipsis.length;
+              if (replaceValue.length - substrStartPoint > settings.stringMaxLength) {
+                endEllipsis = settings.stringEllipsis;
+                if (settings.padEllipsis) {
+                  endEllipsis += " ";
+                  substrLength -= endEllipsis.length;
+                }
+              }
+              replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis;
+            }
+          }
+          if (settings.highlightSearchTerm) {
+            searchTermRegex = new RegExp("(" + searchTerm + ")", 'ig');
+            replaceValue = replaceValue.replace(searchTermRegex, "<strong>$1</strong>");
+          }
+          thisHtml = thisHtml.replace("%s", replaceValue);
+        }
+        html += thisHtml;
+      }
+      html = settings.wrapperHtml.replace("[RESULTS]", html);
+      top = inputField.offset().top + inputField.closest("div").height();
+      right = $(".quotes_container").css("padding-right");
+      position = 'absolute';
+      if (settings.showResultFixed) {
+        position = 'fixed';
+      }
+      settings.container.css({
+        position: position,
+        top: top,
+        right: right
+      }).fadeIn(settings.fadeSpeed).html(html);
+      return settings.backdrop.fadeIn(settings.fadeSpeed);
     };
     requestTimeout = null;
-    return $(this).each(function() {
-      return $(this).on('keyup', function() {
-        if (requestTimeout !== null) {
-          clearTimeout(requestTimeout);
+    requestInProgress = false;
+    runAjax = function(query, inputField) {
+      if (requestInProgress === true) {
+        return false;
+      }
+      settings.ajaxData.searchTerm = query;
+      return $.ajax({
+        url: settings.ajaxUrl,
+        type: settings.ajaxType,
+        async: true,
+        data: settings.ajaxData,
+        beforeSend: function() {
+          return requestInProgress = true;
+        },
+        success: function(response) {
+          if (response.status === 0 && response.result.length > 0) {
+            return attachList(response.result, inputField);
+          } else {
+            return settings.container.html(settings.noResultsHtml);
+          }
+        },
+        error: function(xhr, message, code) {
+          return typeof console !== "undefined" && console !== null ? console.log(message) : void 0;
+        },
+        complete: function() {
+          requestInProgress = false;
+          return requestTimeout = null;
         }
-        return requestTimeout = setTimeout(runAjax($(this).val()), settings.requestWait);
       });
+    };
+    evaluateAjax = function(inputField) {
+      var query;
+
+      query = inputField.val();
+      if (query.length < settings.minLength) {
+        settings.container.fadeOut(settings.fadeSpeed);
+        settings.backdrop.fadeOut(settings.fadeSpeed);
+        return false;
+      }
+      if (requestTimeout === null) {
+        requestTimeout = new Date().getTime();
+      } else if (new Date().getTime() - requestTimeout < settings.requestWait) {
+        return false;
+      }
+      return runAjax(query, inputField);
+    };
+    $(document).on('click', '.lwao_result li', function() {
+      return true;
+    });
+    $(this).each(function() {
+      return $(this).on('keyup', function() {
+        return evaluateAjax($(this));
+      });
+    });
+    return $("body").on('click', function() {
+      settings.container.fadeOut(settings.fadeSpeed);
+      return settings.backdrop.fadeOut(settings.fadeSpeed);
     });
   }
 });
