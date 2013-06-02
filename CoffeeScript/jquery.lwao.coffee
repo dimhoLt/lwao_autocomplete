@@ -126,10 +126,10 @@ $.fn.extend
                 for string, index in settings.resultDisplay
                     continue if index is 0
 
-                    replaceValue = obj[string]
+                    ajaxResultToMatch = obj[string]
 
                     if settings.stringMaxLength > 0
-                        if replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length
+                        if ajaxResultToMatch.length > settings.stringMaxLength + settings.stringEllipsis.length
                             substrStartPoint = 0
 
                             initialEllipsis = ""
@@ -137,44 +137,50 @@ $.fn.extend
                             if settings.highlightSearchTerm
                                 # Find the place in the string where the
                                 # search term is.
-                                searchTermOffset = replaceValue.indexOf searchTerm
+                                searchTermOffset = ajaxResultToMatch.indexOf searchTerm
 
                                 searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength
                                 if searchTermOffset > -1 and searchTermOccurenceIsBeyondView
-                                    # Include the entire search term +
-                                    # searchTermHighlightPadding chars
                                     substrStartPoint = (searchTermOffset + searchTerm.length + settings.searchTermHighlightPadding) - settings.stringMaxLength
 
+                                # Disallow the substring startpoint to be negative.
+                                substrStartPoint = Math.max substrStartPoint, 0
+                                
                                 # If we start from somewhere in the string,
                                 # we'll need to ellips it at the beginning as
                                 # well.
                                 if substrStartPoint > 0
                                     initialEllipsis = settings.stringEllipsis
+                                    substrStartPoint += settings.stringEllipsis.length
                                     if settings.padEllipsis
-                                        initialEllipsis = " " + initialEllipsis
+                                        initialEllipsis = initialEllipsis + " "
+                                        substrStartPoint++
 
                             # Find out how much of the string should be
                             # removed.
                             substrLength = settings.stringMaxLength
                             substrLength -= initialEllipsis.length
 
-                            # Only apply the final ellipsis if we haven't
-                            # pushed the start too far ahead.
-                            if replaceValue.length - substrStartPoint > settings.stringMaxLength
+                            # Only apply the end ellipsis if we haven't pushed
+                            # the start too far ahead.
+                            if ajaxResultToMatch.length - substrStartPoint > settings.stringMaxLength
                                 endEllipsis = settings.stringEllipsis
                                 if settings.padEllipsis
-                                    endEllipsis += " "
+                                    endEllipsis = " " + endEllipsis
                                     substrLength -= endEllipsis.length
 
                             # Perform the cropping...
-                            replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis
+                            ajaxResultToMatch = ajaxResultToMatch.substr(substrStartPoint, substrLength)
+                            
+                            # Add the ellipsis...
+                            ajaxResultToMatch = initialEllipsis + ajaxResultToMatch + endEllipsis
 
                     # And finally highlight the result.
                     if settings.highlightSearchTerm
                         searchTermRegex = new RegExp("("+ searchTerm + ")", 'ig')
-                        replaceValue = replaceValue.replace(searchTermRegex, "<strong>$1</strong>")
+                        ajaxResultToMatch = ajaxResultToMatch.replace(searchTermRegex, "<strong>$1</strong>")
 
-                    thisHtml = thisHtml.replace "%s", replaceValue
+                    thisHtml = thisHtml.replace "%s", ajaxResultToMatch
 
                 html += thisHtml
 

@@ -16,7 +16,7 @@
 */
 $.fn.extend({
   lwao: function(options) {
-    var attachList, evaluateAjax, log, requestInProgress, requestTimeout, runAjax, settings;
+    var attachList, evaluateAjax, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings;
 
     settings = {
       minLength: 3,
@@ -46,7 +46,7 @@ $.fn.extend({
       }
     };
     attachList = function(result, inputField) {
-      var endEllipsis, html, index, initialEllipsis, obj, position, replaceValue, right, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
+      var ajaxResultToMatch, endEllipsis, html, index, initialEllipsis, obj, position, right, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
 
       if (settings.resultDisplay[0].match(/%s/g).length !== (settings.resultDisplay.length - 1)) {
         return false;
@@ -62,42 +62,46 @@ $.fn.extend({
           if (index === 0) {
             continue;
           }
-          replaceValue = obj[string];
+          ajaxResultToMatch = obj[string];
           if (settings.stringMaxLength > 0) {
-            if (replaceValue.length > settings.stringMaxLength + settings.stringEllipsis.length) {
+            if (ajaxResultToMatch.length > settings.stringMaxLength + settings.stringEllipsis.length) {
               substrStartPoint = 0;
               initialEllipsis = "";
               endEllipsis = "";
               if (settings.highlightSearchTerm) {
-                searchTermOffset = replaceValue.indexOf(searchTerm);
+                searchTermOffset = ajaxResultToMatch.indexOf(searchTerm);
                 searchTermOccurenceIsBeyondView = searchTermOffset + searchTerm.length > settings.stringMaxLength;
                 if (searchTermOffset > -1 && searchTermOccurenceIsBeyondView) {
                   substrStartPoint = (searchTermOffset + searchTerm.length + settings.searchTermHighlightPadding) - settings.stringMaxLength;
                 }
+                substrStartPoint = Math.max(substrStartPoint, 0);
                 if (substrStartPoint > 0) {
                   initialEllipsis = settings.stringEllipsis;
+                  substrStartPoint += settings.stringEllipsis.length;
                   if (settings.padEllipsis) {
-                    initialEllipsis = " " + initialEllipsis;
+                    initialEllipsis = initialEllipsis + " ";
+                    substrStartPoint++;
                   }
                 }
               }
               substrLength = settings.stringMaxLength;
               substrLength -= initialEllipsis.length;
-              if (replaceValue.length - substrStartPoint > settings.stringMaxLength) {
+              if (ajaxResultToMatch.length - substrStartPoint > settings.stringMaxLength) {
                 endEllipsis = settings.stringEllipsis;
                 if (settings.padEllipsis) {
-                  endEllipsis += " ";
+                  endEllipsis = " " + endEllipsis;
                   substrLength -= endEllipsis.length;
                 }
               }
-              replaceValue = initialEllipsis + replaceValue.substr(substrStartPoint, substrLength) + endEllipsis;
+              ajaxResultToMatch = ajaxResultToMatch.substr(substrStartPoint, substrLength);
+              ajaxResultToMatch = initialEllipsis + ajaxResultToMatch + endEllipsis;
             }
           }
           if (settings.highlightSearchTerm) {
             searchTermRegex = new RegExp("(" + searchTerm + ")", 'ig');
-            replaceValue = replaceValue.replace(searchTermRegex, "<strong>$1</strong>");
+            ajaxResultToMatch = ajaxResultToMatch.replace(searchTermRegex, "<strong>$1</strong>");
           }
-          thisHtml = thisHtml.replace("%s", replaceValue);
+          thisHtml = thisHtml.replace("%s", ajaxResultToMatch);
         }
         html += thisHtml;
       }
@@ -117,6 +121,7 @@ $.fn.extend({
     };
     requestTimeout = null;
     requestInProgress = false;
+    latestSearchTerm = null;
     runAjax = function(query, inputField) {
       if (requestInProgress === true) {
         return false;
@@ -128,7 +133,8 @@ $.fn.extend({
         async: true,
         data: settings.ajaxData,
         beforeSend: function() {
-          return requestInProgress = true;
+          requestInProgress = true;
+          return latestSearchTerm = query;
         },
         success: function(response) {
           if (response.status === 0 && response.result.length > 0) {
@@ -149,10 +155,13 @@ $.fn.extend({
     evaluateAjax = function(inputField) {
       var query;
 
-      query = inputField.val();
+      query = inputField.val().trim();
       if (query.length < settings.minLength) {
         settings.container.fadeOut(settings.fadeSpeed);
         settings.backdrop.fadeOut(settings.fadeSpeed);
+        return false;
+      }
+      if (query === latestSearchTerm) {
         return false;
       }
       if (requestTimeout === null) {
