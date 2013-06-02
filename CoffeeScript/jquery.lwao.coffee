@@ -163,7 +163,7 @@ $.fn.extend
 
                             # Only apply the end ellipsis if we haven't pushed
                             # the start too far ahead.
-                            if ajaxResultToMatch.length - substrStartPoint > settings.stringMaxLength
+                            if ajaxResultToMatch.length - substrStartPoint > substrLength
                                 endEllipsis = settings.stringEllipsis
                                 if settings.padEllipsis
                                     endEllipsis = " " + endEllipsis
