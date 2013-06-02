@@ -86,7 +86,7 @@ $.fn.extend({
               }
               substrLength = settings.stringMaxLength;
               substrLength -= initialEllipsis.length;
-              if (ajaxResultToMatch.length - substrStartPoint > settings.stringMaxLength) {
+              if (ajaxResultToMatch.length - substrStartPoint > substrLength) {
                 endEllipsis = settings.stringEllipsis;
                 if (settings.padEllipsis) {
                   endEllipsis = " " + endEllipsis;
