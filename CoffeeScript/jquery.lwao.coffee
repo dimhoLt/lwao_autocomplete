@@ -58,6 +58,18 @@ $.fn.extend
             # The container in which the generated result HTML is put.
             container: $(".lwao_result")
             
+            # Associative array of CSS to set to container when showing results.
+            # Example:
+            #   containerCss: {
+            #       'position': 'relative',
+            #       'background': 'red'
+            #   }
+            containerCss: {}
+            
+            # Whether or not to remove the container from the DOM on blur or
+            # keep it.
+            hideContainerOnBlur: true
+            
             # The wrapper HTML holds a "[RESULTS]"-string which is replaced by
             # the generated HTML from the server result. This is to make it
             # easier to build lists.
@@ -67,7 +79,7 @@ $.fn.extend
                 "</ul>\n"
                 
             # Whether or not to use backdrop.
-            # useBackdrop: true
+            useBackdrop: true
             
             # The backdrop object.
             backdrop: $(".lwao_backdrop")
@@ -94,10 +106,6 @@ $.fn.extend
             
             # The amount of time for the fade animation to run.
             fadeSpeed: 150
-            
-            # Whether or not the result lists should be positioned 'fixed'
-            # instead of 'absolute' (which is default).
-            showResultFixed: false
             
             # If in debug mode, more debug data is output.
             debug: true
@@ -191,18 +199,20 @@ $.fn.extend
             html = settings.wrapperHtml.replace "[RESULTS]", html
 
             # Add backdrop if not there.
-            scrollTop = $("body").scrollTop()
-            top = (inputField.offset().top - scrollTop) + inputField.closest("div").height()
-            right = $(".quotes_container").css("padding-right")
-            position = 'absolute'
-            if settings.showResultFixed
-                position = 'fixed'
-            settings.container.css
-                position: position
-                top: top
-                right: right
-            .fadeIn(settings.fadeSpeed).html html
-            settings.backdrop.fadeIn settings.fadeSpeed
+            if settings.containerCss["position"]? and settings.containerCss["position"] is "absolute" or settings.containerCss["position"] is "fixed"
+                scrollTop = $("body").scrollTop()
+                top = (inputField.offset().top - scrollTop) + inputField.closest("div").height()
+                right = $(".quotes_container").css("padding-right")
+                settings.containerCss
+                    position: position
+                    top: top
+                    right: right
+            else
+                settings.container.css settings.containerCss
+            
+            settings.container.fadeIn(settings.fadeSpeed).html html
+            if settings.useBackdrop
+                settings.backdrop.fadeIn settings.fadeSpeed
 
 
         # Instantiate the timout variable and lock this instance to a reference.
@@ -287,6 +297,7 @@ $.fn.extend
         # Attach general closing events.
         #
         $("body").on 'click', ->
-            settings.container.fadeOut settings.fadeSpeed
+            if settings.hideContainerOnBlur
+                settings.container.fadeOut settings.fadeSpeed
             settings.backdrop.fadeOut settings.fadeSpeed
         

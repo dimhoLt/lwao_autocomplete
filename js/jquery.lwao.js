@@ -29,7 +29,10 @@ $.fn.extend({
       resultDisplay: ['<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>', 'qId', 'authorName', 'quote'],
       noResultsHtml: '<span class="noResults">Couldn\'t find anything... sorry =(</span>',
       container: $(".lwao_result"),
+      containerCss: {},
+      hideContainerOnBlur: true,
       wrapperHtml: "<ul class=\"list\">\n" + "[RESULTS]" + "</ul>\n",
+      useBackdrop: true,
       backdrop: $(".lwao_backdrop"),
       stringMaxLength: 80,
       highlightSearchTerm: true,
@@ -37,7 +40,6 @@ $.fn.extend({
       stringEllipsis: "...",
       padEllipsis: true,
       fadeSpeed: 150,
-      showResultFixed: false,
       debug: true
     };
     settings = jQuery.extend(settings, options);
@@ -47,7 +49,7 @@ $.fn.extend({
       }
     };
     attachList = function(result, inputField) {
-      var ajaxResultToMatch, endEllipsis, html, index, initialEllipsis, obj, position, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
+      var ajaxResultToMatch, endEllipsis, html, index, initialEllipsis, obj, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
       if (settings.resultDisplay[0].match(/%s/g).length !== (settings.resultDisplay.length - 1)) {
         return false;
       }
@@ -106,19 +108,22 @@ $.fn.extend({
         html += thisHtml;
       }
       html = settings.wrapperHtml.replace("[RESULTS]", html);
-      scrollTop = $("body").scrollTop();
-      top = (inputField.offset().top - scrollTop) + inputField.closest("div").height();
-      right = $(".quotes_container").css("padding-right");
-      position = 'absolute';
-      if (settings.showResultFixed) {
-        position = 'fixed';
+      if ((settings.containerCss["position"] != null) && settings.containerCss["position"] === "absolute" || settings.containerCss["position"] === "fixed") {
+        scrollTop = $("body").scrollTop();
+        top = (inputField.offset().top - scrollTop) + inputField.closest("div").height();
+        right = $(".quotes_container").css("padding-right");
+        settings.containerCss({
+          position: position,
+          top: top,
+          right: right
+        });
+      } else {
+        settings.container.css(settings.containerCss);
       }
-      settings.container.css({
-        position: position,
-        top: top,
-        right: right
-      }).fadeIn(settings.fadeSpeed).html(html);
-      return settings.backdrop.fadeIn(settings.fadeSpeed);
+      settings.container.fadeIn(settings.fadeSpeed).html(html);
+      if (settings.useBackdrop) {
+        return settings.backdrop.fadeIn(settings.fadeSpeed);
+      }
     };
     requestTimeout = null;
     requestInProgress = false;
@@ -180,7 +185,9 @@ $.fn.extend({
       });
     });
     return $("body").on('click', function() {
-      settings.container.fadeOut(settings.fadeSpeed);
+      if (settings.hideContainerOnBlur) {
+        settings.container.fadeOut(settings.fadeSpeed);
+      }
       return settings.backdrop.fadeOut(settings.fadeSpeed);
     });
   }
