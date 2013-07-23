@@ -37,6 +37,9 @@ $.fn.extend
             # The server variable name that holds the value of the input field.
             inputVarName: 'searchTerm'
             
+            # The server response object name to accept as result.
+            responseResultVarName: 'result'
+            
             # The string created for every match from the server. The first
             # key is the HTML. It should contain "%s"-string with replace
             # values. The following keys should then be, in order, the key names
@@ -213,7 +216,7 @@ $.fn.extend
         runAjax = (query, inputField) ->
             return false if requestInProgress is true
             
-            settings.ajaxData.searchTerm = query
+            settings.ajaxData[settings.inputVarName] = query
 
             $.ajax
                 url: settings.ajaxUrl
@@ -226,8 +229,8 @@ $.fn.extend
                     latestSearchTerm = query
 
                 success: (response) ->
-                    if response.status is 0 and response.result.length > 0
-                        attachList response.result, inputField
+                    if response.status is 0 and response[settings.responseResultVarName].length > 0
+                        attachList response[settings.responseResultVarName], inputField
                         
                     else
                         settings.container.html settings.noResultsHtml
