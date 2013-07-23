@@ -107,6 +107,11 @@ $.fn.extend
             # The amount of time for the fade animation to run.
             fadeSpeed: 150
             
+            # Callback function to run when clicking something. Contains the
+            # clicked element as the parameter.
+            clickCallback: (clickedElement) ->
+                return true
+            
             # If in debug mode, more debug data is output.
             debug: true
         
@@ -136,8 +141,31 @@ $.fn.extend
                 # A non-global regex will perform the matches one-by-one.
                 for string, index in settings.resultDisplay
                     continue if index is 0
-
-                    ajaxResultToMatch = obj[string]
+                    
+                    if string.indexOf(".") isnt -1
+                        keys = string.split(".")
+                        ajaxResultToMatch = obj[keys[0]]
+                    else
+                        ajaxResultToMatch = obj[string]
+                    
+                    ajaxResultToMatch = "" if !ajaxResultToMatch?
+                    
+                    # If we're having nested objects, the result has to be able
+                    # to resolve it.
+                    if typeof ajaxResultToMatch is 'object'
+                        # If it can't match, skip it.
+                        if !keys? or !ajaxResultToMatch[keys[1]]
+                            continue
+                            
+                        newResultToMatch = ""
+                        currObj = ajaxResultToMatch[keys[1]]
+                        for key, index in keys
+                            if !currObj? or typeof currObj isnt 'object'
+                                break
+                                
+                            currObj = currObj[key]
+                            
+                        ajaxResultToMatch = currObj if currObj?
 
                     if settings.stringMaxLength > 0
                         if ajaxResultToMatch.length > settings.stringMaxLength + settings.stringEllipsis.length
@@ -282,11 +310,10 @@ $.fn.extend
             
             
         #
-        # Perform action when clicking on an item in the built autocomplete
-        # list.
+        # Run the clickCallback when clicking an item from the container's list.
         #
-        $(document).on 'click', '.lwao_result li', ->
-            return true
+        settings.container.on 'click', 'li', ->
+            settings.clickCallback $(this)
         
         
         #

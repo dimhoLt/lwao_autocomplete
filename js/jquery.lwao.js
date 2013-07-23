@@ -40,6 +40,9 @@ $.fn.extend({
       stringEllipsis: "...",
       padEllipsis: true,
       fadeSpeed: 150,
+      clickCallback: function(clickedElement) {
+        return true;
+      },
       debug: true
     };
     settings = jQuery.extend(settings, options);
@@ -49,7 +52,7 @@ $.fn.extend({
       }
     };
     attachList = function(result, inputField) {
-      var ajaxResultToMatch, endEllipsis, html, index, initialEllipsis, obj, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
+      var ajaxResultToMatch, currObj, endEllipsis, html, index, initialEllipsis, key, keys, newResultToMatch, obj, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _k, _len, _len1, _len2, _ref;
       if (settings.resultDisplay[0].match(/%s/g).length !== (settings.resultDisplay.length - 1)) {
         return false;
       }
@@ -64,7 +67,32 @@ $.fn.extend({
           if (index === 0) {
             continue;
           }
-          ajaxResultToMatch = obj[string];
+          if (string.indexOf(".") !== -1) {
+            keys = string.split(".");
+            ajaxResultToMatch = obj[keys[0]];
+          } else {
+            ajaxResultToMatch = obj[string];
+          }
+          if (ajaxResultToMatch == null) {
+            ajaxResultToMatch = "";
+          }
+          if (typeof ajaxResultToMatch === 'object') {
+            if ((keys == null) || !ajaxResultToMatch[keys[1]]) {
+              continue;
+            }
+            newResultToMatch = "";
+            currObj = ajaxResultToMatch[keys[1]];
+            for (index = _k = 0, _len2 = keys.length; _k < _len2; index = ++_k) {
+              key = keys[index];
+              if ((currObj == null) || typeof currObj !== 'object') {
+                break;
+              }
+              currObj = currObj[key];
+            }
+            if (currObj != null) {
+              ajaxResultToMatch = currObj;
+            }
+          }
           if (settings.stringMaxLength > 0) {
             if (ajaxResultToMatch.length > settings.stringMaxLength + settings.stringEllipsis.length) {
               substrStartPoint = 0;
@@ -175,8 +203,8 @@ $.fn.extend({
       }
       return runAjax(query, inputField);
     };
-    $(document).on('click', '.lwao_result li', function() {
-      return true;
+    settings.container.on('click', 'li', function() {
+      return settings.clickCallback($(this));
     });
     $(this).each(function() {
       return $(this).on('keyup', function() {
