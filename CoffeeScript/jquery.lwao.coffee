@@ -154,20 +154,19 @@ $.fn.extend
                     # to resolve it.
                     if typeof ajaxResultToMatch is 'object'
                         # If it can't match, skip it.
-                        if !keys? or !ajaxResultToMatch[keys[1]]
-                            continue
-                            
-                        newResultToMatch = ""
-                        currObj = ajaxResultToMatch[keys[1]]
-                        for key, index in keys
-                            if !currObj? or typeof currObj isnt 'object'
-                                break
-                                
-                            currObj = currObj[key]
-                            
-                        ajaxResultToMatch = currObj if currObj?
+                        if keys? and ajaxResultToMatch[keys[1]]
+                            newResultToMatch = ""
+                            currObj = ajaxResultToMatch[keys[1]]
+                            for key, index in keys
+                                if !currObj? or typeof currObj isnt 'object'
+                                    break
 
-                    if settings.stringMaxLength > 0
+                                currObj = currObj[key]
+
+                            if currObj
+                                ajaxResultToMatch = currObj
+
+                    if typeof ajaxResultToMatch isnt 'object' and settings.stringMaxLength > 0
                         if ajaxResultToMatch.length > settings.stringMaxLength + settings.stringEllipsis.length
                             substrStartPoint = 0
 
@@ -215,10 +214,13 @@ $.fn.extend
                             ajaxResultToMatch = initialEllipsis + ajaxResultToMatch + endEllipsis
 
                     # And finally highlight the result.
-                    if settings.highlightSearchTerm
+                    if typeof ajaxResultToMatch isnt 'object' and settings.highlightSearchTerm
                         searchTermRegex = new RegExp("("+ searchTerm + ")", 'ig')
                         ajaxResultToMatch = ajaxResultToMatch.replace(searchTermRegex, "<strong>$1</strong>")
 
+                    if typeof ajaxResultToMatch is 'object'
+                        ajaxResultToMatch = JSON.stringify ajaxResultToMatch
+                        
                     thisHtml = thisHtml.replace "%s", ajaxResultToMatch
 
                 html += thisHtml

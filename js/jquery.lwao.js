@@ -77,23 +77,22 @@ $.fn.extend({
             ajaxResultToMatch = "";
           }
           if (typeof ajaxResultToMatch === 'object') {
-            if ((keys == null) || !ajaxResultToMatch[keys[1]]) {
-              continue;
-            }
-            newResultToMatch = "";
-            currObj = ajaxResultToMatch[keys[1]];
-            for (index = _k = 0, _len2 = keys.length; _k < _len2; index = ++_k) {
-              key = keys[index];
-              if ((currObj == null) || typeof currObj !== 'object') {
-                break;
+            if ((keys != null) && ajaxResultToMatch[keys[1]]) {
+              newResultToMatch = "";
+              currObj = ajaxResultToMatch[keys[1]];
+              for (index = _k = 0, _len2 = keys.length; _k < _len2; index = ++_k) {
+                key = keys[index];
+                if ((currObj == null) || typeof currObj !== 'object') {
+                  break;
+                }
+                currObj = currObj[key];
               }
-              currObj = currObj[key];
-            }
-            if (currObj != null) {
-              ajaxResultToMatch = currObj;
+              if (currObj) {
+                ajaxResultToMatch = currObj;
+              }
             }
           }
-          if (settings.stringMaxLength > 0) {
+          if (typeof ajaxResultToMatch !== 'object' && settings.stringMaxLength > 0) {
             if (ajaxResultToMatch.length > settings.stringMaxLength + settings.stringEllipsis.length) {
               substrStartPoint = 0;
               initialEllipsis = "";
@@ -127,9 +126,12 @@ $.fn.extend({
               ajaxResultToMatch = initialEllipsis + ajaxResultToMatch + endEllipsis;
             }
           }
-          if (settings.highlightSearchTerm) {
+          if (typeof ajaxResultToMatch !== 'object' && settings.highlightSearchTerm) {
             searchTermRegex = new RegExp("(" + searchTerm + ")", 'ig');
             ajaxResultToMatch = ajaxResultToMatch.replace(searchTermRegex, "<strong>$1</strong>");
+          }
+          if (typeof ajaxResultToMatch === 'object') {
+            ajaxResultToMatch = JSON.stringify(ajaxResultToMatch);
           }
           thisHtml = thisHtml.replace("%s", ajaxResultToMatch);
         }
