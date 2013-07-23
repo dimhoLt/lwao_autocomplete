@@ -112,14 +112,13 @@ $.fn.extend({
         scrollTop = $("body").scrollTop();
         top = (inputField.offset().top - scrollTop) + inputField.closest("div").height();
         right = $(".quotes_container").css("padding-right");
-        settings.containerCss({
-          position: position,
+        settings.container.css({
+          position: settings.containerCss["position"],
           top: top,
           right: right
         });
-      } else {
-        settings.container.css(settings.containerCss);
       }
+      settings.container.css(settings.containerCss);
       settings.container.fadeIn(settings.fadeSpeed).html(html);
       if (settings.useBackdrop) {
         return settings.backdrop.fadeIn(settings.fadeSpeed);

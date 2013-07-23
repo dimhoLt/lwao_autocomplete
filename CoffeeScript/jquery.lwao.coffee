@@ -198,19 +198,23 @@ $.fn.extend
             # Create proper DOM...
             html = settings.wrapperHtml.replace "[RESULTS]", html
 
-            # Add backdrop if not there.
+            # If we have a position, calculate placement and show the results.
             if settings.containerCss["position"]? and settings.containerCss["position"] is "absolute" or settings.containerCss["position"] is "fixed"
                 scrollTop = $("body").scrollTop()
                 top = (inputField.offset().top - scrollTop) + inputField.closest("div").height()
                 right = $(".quotes_container").css("padding-right")
-                settings.containerCss
-                    position: position
+                settings.container.css
+                    position: settings.containerCss["position"]
                     top: top
                     right: right
-            else
-                settings.container.css settings.containerCss
             
+            # Add custom on-load css by user.
+            settings.container.css settings.containerCss
+            
+            # Show results.
             settings.container.fadeIn(settings.fadeSpeed).html html
+            
+            # Are we to use backdrop? Then fade it in.
             if settings.useBackdrop
                 settings.backdrop.fadeIn settings.fadeSpeed
 
