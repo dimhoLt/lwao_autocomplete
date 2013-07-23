@@ -191,7 +191,8 @@ $.fn.extend
             html = settings.wrapperHtml.replace "[RESULTS]", html
 
             # Add backdrop if not there.
-            top = inputField.offset().top + inputField.closest("div").height()
+            scrollTop = $("body").scrollTop()
+            top = (inputField.offset().top - scrollTop) + inputField.closest("div").height()
             right = $(".quotes_container").css("padding-right")
             position = 'absolute'
             if settings.showResultFixed

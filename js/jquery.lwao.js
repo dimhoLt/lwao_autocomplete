@@ -47,7 +47,7 @@ $.fn.extend({
       }
     };
     attachList = function(result, inputField) {
-      var ajaxResultToMatch, endEllipsis, html, index, initialEllipsis, obj, position, right, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
+      var ajaxResultToMatch, endEllipsis, html, index, initialEllipsis, obj, position, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
       if (settings.resultDisplay[0].match(/%s/g).length !== (settings.resultDisplay.length - 1)) {
         return false;
       }
@@ -106,7 +106,8 @@ $.fn.extend({
         html += thisHtml;
       }
       html = settings.wrapperHtml.replace("[RESULTS]", html);
-      top = inputField.offset().top + inputField.closest("div").height();
+      scrollTop = $("body").scrollTop();
+      top = (inputField.offset().top - scrollTop) + inputField.closest("div").height();
       right = $(".quotes_container").css("padding-right");
       position = 'absolute';
       if (settings.showResultFixed) {
