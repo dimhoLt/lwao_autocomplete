@@ -109,8 +109,11 @@ $.fn.extend
             
             # Callback function to run when clicking something. Contains the
             # clicked element as the parameter.
-            clickCallback: (clickedElement) ->
-                return true
+            clickCallback: null
+            
+            # If set, traversal, i.e., selecting the result item using the
+            # keyboard arrow keys is ignored.
+            disableTraversal: false
             
             # If in debug mode, more debug data is output.
             debug: true
@@ -123,6 +126,52 @@ $.fn.extend
         # Simple logger.
         log = (msg) ->
             console?.log msg if settings.debug
+        
+        
+        # Keeps track of keypress events to prevent the browser to perform more
+        # than desired keypresses when traversing.
+        traversingInProgress = false
+            
+            
+        #
+        # Traverse the result list.
+        #
+        traverseResultList = (direction) ->
+            switch direction
+                when "down"
+                    if settings.container.find("li a.selected").length is 0
+                        settings.container.find("li:first a").addClass "selected"
+                    else
+                        settings.container.find("a.selected")
+                            .removeClass("selected")
+                            .closest("li")
+                            .next()
+                            .find("a")
+                            .addClass("selected")
+                                
+                when "up"
+                    if settings.container.find("li a.selected").length is 0
+                        setings.container.find("li:last a").addClass "selected"
+                        
+                    else
+                        settings.container.find("a.selected")
+                            .removeClass("selected")
+                            .closest("li")
+                            .prev()
+                            .find("a")
+                            .addClass("selected")
+            
+            traversingInProgress = false
+            return
+            
+            
+        #
+        # Hides the autocomplete according to settings.
+        #
+        hide = ->
+            if settings.hideContainerOnBlur
+                settings.container.fadeOut settings.fadeSpeed
+            settings.backdrop.fadeOut settings.fadeSpeed
          
          
         #
@@ -224,21 +273,6 @@ $.fn.extend
                     thisHtml = thisHtml.replace "%s", ajaxResultToMatch
 
                 html += thisHtml
-                
-                # Attach event to pressing the arrow keys.
-                inputField.on 'keyup', (e) ->
-                    if e.keyCode is 38 # Up-arrow
-                        return
-                        
-                    else if e.keyCode is 40 # Down-arrow
-                        if settings.container.find("li a.selected").length is 0
-                            settings.container.find("li:first a").addClass "selected"
-                        else
-                            settings.container.find("a.selected").removeClass("selected").closest("li").next().find("a").addClass("selected")
-                                
-                    else if e.keyCode is 13 # Enter
-                        # Select item here.
-                        return
 
             # Create proper DOM...
             html = settings.wrapperHtml.replace "[RESULTS]", html
@@ -330,7 +364,33 @@ $.fn.extend
         # Run the clickCallback when clicking an item from the container's list.
         #
         settings.container.on 'click', 'li', ->
-            settings.clickCallback $(this)
+            if settings.clickCallback isnt null
+                settings.clickCallback $(this)
+            
+            
+        #
+        # Attach event traversing the result list to pressing the arrow keys.
+        #
+        if settings.disableTraversal is false
+            $(this).on 'keyup', (e) ->
+                if e.keyCode is 38 # Up-arrow
+                    traverseResultList "up"
+
+                else if e.keyCode is 40 # Down-arrow
+                    traverseResultList "down"
+
+                else if e.keyCode is 13 # Enter
+                    e.preventDefault()
+                    if settings.container.find("a.selected").length isnt 0
+                        if settings.clickCallback isnt null
+                            settings.clickCallback settings.container.find("a.selected").closest("li")
+                            hide()
+                            
+                        else
+                            locationTarget = settings.container.find("a.selected").attr "href"
+                            window.location.href = locationTarget
+                    else
+                        return false
             
             
         #
@@ -353,7 +413,5 @@ $.fn.extend
         # Attach general closing events.
         #
         $("body").on 'click', ->
-            if settings.hideContainerOnBlur
-                settings.container.fadeOut settings.fadeSpeed
-            settings.backdrop.fadeOut settings.fadeSpeed
+            hide()
         

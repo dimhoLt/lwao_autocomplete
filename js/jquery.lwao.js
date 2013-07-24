@@ -17,7 +17,7 @@
 
 $.fn.extend({
   lwao: function(options) {
-    var attachList, evaluateAjax, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings;
+    var attachList, evaluateAjax, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
     settings = {
       minLength: 3,
       ajaxUrl: '',
@@ -40,9 +40,8 @@ $.fn.extend({
       stringEllipsis: "...",
       padEllipsis: true,
       fadeSpeed: 150,
-      clickCallback: function(clickedElement) {
-        return true;
-      },
+      clickCallback: null,
+      disableTraversal: false,
       debug: true
     };
     settings = jQuery.extend(settings, options);
@@ -50,6 +49,25 @@ $.fn.extend({
       if (settings.debug) {
         return typeof console !== "undefined" && console !== null ? console.log(msg) : void 0;
       }
+    };
+    traversingInProgress = false;
+    traverseResultList = function(direction) {
+      switch (direction) {
+        case "down":
+          if (settings.container.find("li a.selected").length === 0) {
+            settings.container.find("li:first a").addClass("selected");
+          } else {
+            settings.container.find("a.selected").removeClass("selected").closest("li").next().find("a").addClass("selected");
+          }
+          break;
+        case "up":
+          if (settings.container.find("li a.selected").length === 0) {
+            setings.container.find("li:last a").addClass("selected");
+          } else {
+            settings.container.find("a.selected").removeClass("selected").closest("li").prev().find("a").addClass("selected");
+          }
+      }
+      traversingInProgress = false;
     };
     attachList = function(result, inputField) {
       var ajaxResultToMatch, currObj, endEllipsis, html, index, initialEllipsis, key, keys, newResultToMatch, obj, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _k, _len, _len1, _len2, _ref;
@@ -136,19 +154,6 @@ $.fn.extend({
           thisHtml = thisHtml.replace("%s", ajaxResultToMatch);
         }
         html += thisHtml;
-        inputField.on('keyup', function(e) {
-          if (e.keyCode === 38) {
-
-          } else if (e.keyCode === 40) {
-            if (settings.container.find("li a.selected").length === 0) {
-              return settings.container.find("li:first a").addClass("selected");
-            } else {
-              return settings.container.find("a.selected").removeClass("selected").closest("li").next().find("a").addClass("selected");
-            }
-          } else if (e.keyCode === 13) {
-
-          }
-        });
       }
       html = settings.wrapperHtml.replace("[RESULTS]", html);
       if ((settings.containerCss["position"] != null) && settings.containerCss["position"] === "absolute" || settings.containerCss["position"] === "fixed") {
@@ -219,8 +224,32 @@ $.fn.extend({
       return runAjax(query, inputField);
     };
     settings.container.on('click', 'li', function() {
-      return settings.clickCallback($(this));
+      if (settings.clickCallback !== null) {
+        return settings.clickCallback($(this));
+      }
     });
+    if (settings.disableTraversal === false) {
+      $(this).on('keyup', function(e) {
+        var locationTarget;
+        if (e.keyCode === 38) {
+          return traverseResultList("up");
+        } else if (e.keyCode === 40) {
+          return traverseResultList("down");
+        } else if (e.keyCode === 13) {
+          e.preventDefault();
+          if (settings.container.find("a.selected").length !== 0) {
+            if (clickCallback !== null) {
+              return clickCallback(settings.container.find("a.selected").closest("li"));
+            } else {
+              locationTarget = settings.container.find("a.selected").attr("href");
+              return window.location.href = locationTarget;
+            }
+          } else {
+            return false;
+          }
+        }
+      });
+    }
     settings.container.on('mouseenter', function() {
       return $(this).find("a").removeClass("selected");
     });
