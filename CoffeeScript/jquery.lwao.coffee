@@ -224,6 +224,21 @@ $.fn.extend
                     thisHtml = thisHtml.replace "%s", ajaxResultToMatch
 
                 html += thisHtml
+                
+                # Attach event to pressing the arrow keys.
+                inputField.on 'keyup', (e) ->
+                    if e.keyCode is 38 # Up-arrow
+                        return
+                        
+                    else if e.keyCode is 40 # Down-arrow
+                        if settings.container.find("li a.selected").length is 0
+                            settings.container.find("li:first a").addClass "selected"
+                        else
+                            settings.container.find("a.selected").removeClass("selected").closest("li").next().find("a").addClass("selected")
+                                
+                    else if e.keyCode is 13 # Enter
+                        # Select item here.
+                        return
 
             # Create proper DOM...
             html = settings.wrapperHtml.replace "[RESULTS]", html
@@ -316,6 +331,14 @@ $.fn.extend
         #
         settings.container.on 'click', 'li', ->
             settings.clickCallback $(this)
+            
+            
+        #
+        # Remove any selected-class from the keyboard when hovering so we don't
+        # have several selected items.
+        #
+        settings.container.on 'mouseenter', ->
+            $(this).find("a").removeClass("selected")
         
         
         #

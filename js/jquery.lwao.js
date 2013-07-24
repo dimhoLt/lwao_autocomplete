@@ -136,6 +136,19 @@ $.fn.extend({
           thisHtml = thisHtml.replace("%s", ajaxResultToMatch);
         }
         html += thisHtml;
+        inputField.on('keyup', function(e) {
+          if (e.keyCode === 38) {
+
+          } else if (e.keyCode === 40) {
+            if (settings.container.find("li a.selected").length === 0) {
+              return settings.container.find("li:first a").addClass("selected");
+            } else {
+              return settings.container.find("a.selected").removeClass("selected").closest("li").next().find("a").addClass("selected");
+            }
+          } else if (e.keyCode === 13) {
+
+          }
+        });
       }
       html = settings.wrapperHtml.replace("[RESULTS]", html);
       if ((settings.containerCss["position"] != null) && settings.containerCss["position"] === "absolute" || settings.containerCss["position"] === "fixed") {
@@ -207,6 +220,9 @@ $.fn.extend({
     };
     settings.container.on('click', 'li', function() {
       return settings.clickCallback($(this));
+    });
+    settings.container.on('mouseenter', function() {
+      return $(this).find("a").removeClass("selected");
     });
     $(this).each(function() {
       return $(this).on('keyup', function() {
