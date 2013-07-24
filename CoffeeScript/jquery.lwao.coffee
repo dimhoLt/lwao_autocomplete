@@ -274,7 +274,7 @@ $.fn.extend
                     latestSearchTerm = query
 
                 success: (response) ->
-                    if response.status is 0 and response[settings.responseResultVarName].length > 0
+                    if response.status is 0 and response[settings.responseResultVarName]? and response[settings.responseResultVarName].length > 0
                         attachList response[settings.responseResultVarName], inputField
                         
                     else

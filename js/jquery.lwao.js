@@ -172,7 +172,7 @@ $.fn.extend({
           return latestSearchTerm = query;
         },
         success: function(response) {
-          if (response.status === 0 && response[settings.responseResultVarName].length > 0) {
+          if (response.status === 0 && (response[settings.responseResultVarName] != null) && response[settings.responseResultVarName].length > 0) {
             return attachList(response[settings.responseResultVarName], inputField);
           } else {
             return settings.container.html(settings.noResultsHtml);
