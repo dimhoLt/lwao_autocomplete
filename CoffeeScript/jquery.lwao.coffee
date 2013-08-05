@@ -74,7 +74,7 @@ $.fn.extend
             # the generated HTML from the server result. This is to make it
             # easier to build lists.
             wrapperHtml:
-                "<ul class=\"list\">\n" +
+                "<ul class=\"lwao_list\">\n" +
                 "[RESULTS]" +
                 "</ul>\n"
                 

@@ -17,7 +17,7 @@
 
 $.fn.extend({
   lwao: function(options) {
-    var attachList, evaluateAjax, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
+    var attachList, evaluateAjax, hide, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
     settings = {
       minLength: 3,
       ajaxUrl: '',
@@ -31,7 +31,7 @@ $.fn.extend({
       container: $(".lwao_result"),
       containerCss: {},
       hideContainerOnBlur: true,
-      wrapperHtml: "<ul class=\"list\">\n" + "[RESULTS]" + "</ul>\n",
+      wrapperHtml: "<ul class=\"lwao_list\">\n" + "[RESULTS]" + "</ul>\n",
       useBackdrop: true,
       backdrop: $(".lwao_backdrop"),
       stringMaxLength: 80,
@@ -68,6 +68,12 @@ $.fn.extend({
           }
       }
       traversingInProgress = false;
+    };
+    hide = function() {
+      if (settings.hideContainerOnBlur) {
+        settings.container.fadeOut(settings.fadeSpeed);
+      }
+      return settings.backdrop.fadeOut(settings.fadeSpeed);
     };
     attachList = function(result, inputField) {
       var ajaxResultToMatch, currObj, endEllipsis, html, index, initialEllipsis, key, keys, newResultToMatch, obj, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _k, _len, _len1, _len2, _ref;
@@ -238,8 +244,9 @@ $.fn.extend({
         } else if (e.keyCode === 13) {
           e.preventDefault();
           if (settings.container.find("a.selected").length !== 0) {
-            if (clickCallback !== null) {
-              return clickCallback(settings.container.find("a.selected").closest("li"));
+            if (settings.clickCallback !== null) {
+              settings.clickCallback(settings.container.find("a.selected").closest("li"));
+              return hide();
             } else {
               locationTarget = settings.container.find("a.selected").attr("href");
               return window.location.href = locationTarget;
@@ -259,10 +266,7 @@ $.fn.extend({
       });
     });
     return $("body").on('click', function() {
-      if (settings.hideContainerOnBlur) {
-        settings.container.fadeOut(settings.fadeSpeed);
-      }
-      return settings.backdrop.fadeOut(settings.fadeSpeed);
+      return hide();
     });
   }
 });
