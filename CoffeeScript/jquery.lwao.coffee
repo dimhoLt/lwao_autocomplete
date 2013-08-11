@@ -74,7 +74,7 @@ $.fn.extend
             # the generated HTML from the server result. This is to make it
             # easier to build lists.
             wrapperHtml:
-                "<ul class=\"list\">\n" +
+                "<ul class=\"lwao_list\">\n" +
                 "[RESULTS]" +
                 "</ul>\n"
                 
@@ -109,7 +109,11 @@ $.fn.extend
             
             # Callback function to run when clicking something. Contains the
             # clicked element as the parameter.
-            clickCallback: null
+            selectCallback: null
+
+            # Callback function to run if changing the input after an item has
+            # been selected.
+            changeAfterSelectCallback: null
             
             # If set, traversal, i.e., selecting the result item using the
             # keyboard arrow keys is ignored.
@@ -128,9 +132,9 @@ $.fn.extend
             console?.log msg if settings.debug
         
         
-        # Keeps track of keypress events to prevent the browser to perform more
-        # than desired keypresses when traversing.
+        # State trackers...
         traversingInProgress = false
+        itemSelected = false
             
             
         #
@@ -151,7 +155,7 @@ $.fn.extend
                                 
                 when "up"
                     if settings.container.find("li a.selected").length is 0
-                        setings.container.find("li:last a").addClass "selected"
+                        settings.container.find("li:last a").addClass "selected"
                         
                     else
                         settings.container.find("a.selected")
@@ -361,11 +365,11 @@ $.fn.extend
             
             
         #
-        # Run the clickCallback when clicking an item from the container's list.
+        # Run the selectCallback when clicking an item from the container's list.
         #
         settings.container.on 'click', 'li', ->
-            if settings.clickCallback isnt null
-                settings.clickCallback $(this)
+            if settings.selectCallback isnt null
+                itemSelected = true
             
             
         #
@@ -381,9 +385,10 @@ $.fn.extend
 
                 else if e.keyCode is 13 # Enter
                     e.preventDefault()
+                    itemSelected = true
                     if settings.container.find("a.selected").length isnt 0
-                        if settings.clickCallback isnt null
-                            settings.clickCallback settings.container.find("a.selected").closest("li")
+                        if settings.selectCallback isnt null
+                            settings.selectCallback settings.container.find("a.selected").closest("li")
                             hide()
                             
                         else
@@ -405,8 +410,21 @@ $.fn.extend
         # Attach autocomplete to all inputs in set.
         #
         $(this).each ->
-            $(this).on 'keyup', ->
-                evaluateAjax $(this)
+            $(this).on 'keyup', (e) ->
+                # Ignore if pressing enter - that's a selection.
+                if e.keyCode is 13 # Enter
+                    return
+                    
+                if e.keyCode is 27 # Escape
+                    hide()
+                
+                else
+                    if itemSelected is true
+                        itemSelected = false
+                        if settings.changeAfterSelectCallback isnt null
+                            settings.changeAfterSelectCallback()
+                    
+                    evaluateAjax $(this)
                 
                 
         #

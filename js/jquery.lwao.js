@@ -17,7 +17,7 @@
 
 $.fn.extend({
   lwao: function(options) {
-    var attachList, evaluateAjax, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
+    var attachList, evaluateAjax, hide, itemSelected, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
     settings = {
       minLength: 3,
       ajaxUrl: '',
@@ -31,7 +31,7 @@ $.fn.extend({
       container: $(".lwao_result"),
       containerCss: {},
       hideContainerOnBlur: true,
-      wrapperHtml: "<ul class=\"list\">\n" + "[RESULTS]" + "</ul>\n",
+      wrapperHtml: "<ul class=\"lwao_list\">\n" + "[RESULTS]" + "</ul>\n",
       useBackdrop: true,
       backdrop: $(".lwao_backdrop"),
       stringMaxLength: 80,
@@ -40,7 +40,8 @@ $.fn.extend({
       stringEllipsis: "...",
       padEllipsis: true,
       fadeSpeed: 150,
-      clickCallback: null,
+      selectCallback: null,
+      changeAfterSelectCallback: null,
       disableTraversal: false,
       debug: true
     };
@@ -51,6 +52,7 @@ $.fn.extend({
       }
     };
     traversingInProgress = false;
+    itemSelected = false;
     traverseResultList = function(direction) {
       switch (direction) {
         case "down":
@@ -62,12 +64,18 @@ $.fn.extend({
           break;
         case "up":
           if (settings.container.find("li a.selected").length === 0) {
-            setings.container.find("li:last a").addClass("selected");
+            settings.container.find("li:last a").addClass("selected");
           } else {
             settings.container.find("a.selected").removeClass("selected").closest("li").prev().find("a").addClass("selected");
           }
       }
       traversingInProgress = false;
+    };
+    hide = function() {
+      if (settings.hideContainerOnBlur) {
+        settings.container.fadeOut(settings.fadeSpeed);
+      }
+      return settings.backdrop.fadeOut(settings.fadeSpeed);
     };
     attachList = function(result, inputField) {
       var ajaxResultToMatch, currObj, endEllipsis, html, index, initialEllipsis, key, keys, newResultToMatch, obj, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, string, substrLength, substrStartPoint, thisHtml, top, _i, _j, _k, _len, _len1, _len2, _ref;
@@ -224,8 +232,8 @@ $.fn.extend({
       return runAjax(query, inputField);
     };
     settings.container.on('click', 'li', function() {
-      if (settings.clickCallback !== null) {
-        return settings.clickCallback($(this));
+      if (settings.selectCallback !== null) {
+        return itemSelected = true;
       }
     });
     if (settings.disableTraversal === false) {
@@ -237,9 +245,11 @@ $.fn.extend({
           return traverseResultList("down");
         } else if (e.keyCode === 13) {
           e.preventDefault();
+          itemSelected = true;
           if (settings.container.find("a.selected").length !== 0) {
-            if (clickCallback !== null) {
-              return clickCallback(settings.container.find("a.selected").closest("li"));
+            if (settings.selectCallback !== null) {
+              settings.selectCallback(settings.container.find("a.selected").closest("li"));
+              return hide();
             } else {
               locationTarget = settings.container.find("a.selected").attr("href");
               return window.location.href = locationTarget;
@@ -254,15 +264,25 @@ $.fn.extend({
       return $(this).find("a").removeClass("selected");
     });
     $(this).each(function() {
-      return $(this).on('keyup', function() {
-        return evaluateAjax($(this));
+      return $(this).on('keyup', function(e) {
+        if (e.keyCode === 13) {
+          return;
+        }
+        if (e.keyCode === 27) {
+          return hide();
+        } else {
+          if (itemSelected === true) {
+            itemSelected = false;
+            if (settings.changeAfterSelectCallback !== null) {
+              settings.changeAfterSelectCallback();
+            }
+          }
+          return evaluateAjax($(this));
+        }
       });
     });
     return $("body").on('click', function() {
-      if (settings.hideContainerOnBlur) {
-        settings.container.fadeOut(settings.fadeSpeed);
-      }
-      return settings.backdrop.fadeOut(settings.fadeSpeed);
+      return hide();
     });
   }
 });
