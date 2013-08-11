@@ -40,7 +40,7 @@ $.fn.extend({
       stringEllipsis: "...",
       padEllipsis: true,
       fadeSpeed: 150,
-      clickCallback: null,
+      selectCallback: null,
       disableTraversal: false,
       debug: true
     };
@@ -230,8 +230,8 @@ $.fn.extend({
       return runAjax(query, inputField);
     };
     settings.container.on('click', 'li', function() {
-      if (settings.clickCallback !== null) {
-        return settings.clickCallback($(this));
+      if (settings.selectCallback !== null) {
+        return settings.selectCallback($(this));
       }
     });
     if (settings.disableTraversal === false) {
@@ -244,8 +244,8 @@ $.fn.extend({
         } else if (e.keyCode === 13) {
           e.preventDefault();
           if (settings.container.find("a.selected").length !== 0) {
-            if (settings.clickCallback !== null) {
-              settings.clickCallback(settings.container.find("a.selected").closest("li"));
+            if (settings.selectCallback !== null) {
+              settings.selectCallback(settings.container.find("a.selected").closest("li"));
               return hide();
             } else {
               locationTarget = settings.container.find("a.selected").attr("href");
@@ -261,7 +261,10 @@ $.fn.extend({
       return $(this).find("a").removeClass("selected");
     });
     $(this).each(function() {
-      return $(this).on('keyup', function() {
+      return $(this).on('keyup', function(e) {
+        if (e.keyCode === 13) {
+          return;
+        }
         return evaluateAjax($(this));
       });
     });

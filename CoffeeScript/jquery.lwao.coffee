@@ -405,7 +405,13 @@ $.fn.extend
         # Attach autocomplete to all inputs in set.
         #
         $(this).each ->
-            $(this).on 'keyup', ->
+            $(this).on 'keyup', (e) ->
+                # Don't attempt to fetch new lists if it was enter that was
+                # pressed.
+                if e.keyCode is 13 # Enter
+                    return
+                
+                # Otherwise, check the search.
                 evaluateAjax $(this)
                 
                 
