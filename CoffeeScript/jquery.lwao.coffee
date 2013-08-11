@@ -109,7 +109,7 @@ $.fn.extend
             
             # Callback function to run when clicking something. Contains the
             # clicked element as the parameter.
-            clickCallback: null
+            selectCallback: null
             
             # If set, traversal, i.e., selecting the result item using the
             # keyboard arrow keys is ignored.
@@ -361,11 +361,11 @@ $.fn.extend
             
             
         #
-        # Run the clickCallback when clicking an item from the container's list.
+        # Run the selectCallback when clicking an item from the container's list.
         #
         settings.container.on 'click', 'li', ->
-            if settings.clickCallback isnt null
-                settings.clickCallback $(this)
+            if settings.selectCallback isnt null
+                settings.selectCallback $(this)
             
             
         #
@@ -382,8 +382,8 @@ $.fn.extend
                 else if e.keyCode is 13 # Enter
                     e.preventDefault()
                     if settings.container.find("a.selected").length isnt 0
-                        if settings.clickCallback isnt null
-                            settings.clickCallback settings.container.find("a.selected").closest("li")
+                        if settings.selectCallback isnt null
+                            settings.selectCallback settings.container.find("a.selected").closest("li")
                             hide()
                             
                         else
