@@ -231,10 +231,13 @@ $.fn.extend({
       }
       return runAjax(query, inputField);
     };
-    settings.container.on('click', 'li', function() {
+    settings.container.on('click', 'li a', function(e) {
       if (settings.selectCallback !== null) {
-        return itemSelected = true;
+        e.preventDefault();
+        itemSelected = true;
+        settings.selectCallback($(this).parent());
       }
+      return true;
     });
     if (settings.disableTraversal === false) {
       $(this).on('keyup', function(e) {

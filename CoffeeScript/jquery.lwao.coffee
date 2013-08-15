@@ -367,9 +367,13 @@ $.fn.extend
         #
         # Run the selectCallback when clicking an item from the container's list.
         #
-        settings.container.on 'click', 'li', ->
+        settings.container.on 'click', 'li a', (e) ->
             if settings.selectCallback isnt null
+                e.preventDefault()
                 itemSelected = true
+                settings.selectCallback $(this).parent()
+                
+            return true
             
             
         #
