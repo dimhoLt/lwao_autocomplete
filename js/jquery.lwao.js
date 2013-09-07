@@ -165,7 +165,7 @@ $.fn.extend({
       }
       html = settings.wrapperHtml.replace("[RESULTS]", html);
       if ((settings.containerCss["position"] != null) && settings.containerCss["position"] === "absolute" || settings.containerCss["position"] === "fixed") {
-        scrollTop = $("body").scrollTop();
+        scrollTop = $(window).scrollTop();
         top = (inputField.offset().top - scrollTop) + inputField.closest("div").height();
         right = $(".quotes_container").css("padding-right");
         settings.container.css({

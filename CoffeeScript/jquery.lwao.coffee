@@ -283,7 +283,7 @@ $.fn.extend
 
             # If we have a position, calculate placement and show the results.
             if settings.containerCss["position"]? and settings.containerCss["position"] is "absolute" or settings.containerCss["position"] is "fixed"
-                scrollTop = $("body").scrollTop()
+                scrollTop = $(window).scrollTop()
                 top = (inputField.offset().top - scrollTop) + inputField.closest("div").height()
                 right = $(".quotes_container").css("padding-right")
                 settings.container.css
