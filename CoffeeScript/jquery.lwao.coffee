@@ -40,17 +40,39 @@ $.fn.extend
             # The server response object name to accept as result.
             responseResultVarName: 'result'
             
-            # The string created for every match from the server. The first
-            # key is the HTML. It should contain "%s"-string with replace
-            # values. The following keys should then be, in order, the key names
-            # from the server result object that should replace the
-            # "%s"-strings.
-            resultDisplay: [
-                '<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>'
-                'qId'
-                'authorName'
-                'quote'
-            ]
+            # The HTML string created by the server result for each item. The
+            # first value, 'html', is the HTML markup that will constitute each
+            # item. If SHOULD contain '%s'-strings plotting replaces
+            # corresponding to server results.
+            # Following this, there should be an EQUAL number of values in this
+            # object as there are '%s'-strings in the markup defining which
+            # result values we'll actually use to populate the list. NOTE that
+            # these MAY contain dots, if the server item we're looking for is
+            # an object. Example:
+            #     'author.name' will assume that the server returns an "author"
+            #                   object with the value "name".
+            #
+            # The value of the key is the fallback value if the server response
+            # is null or undefined.
+            #
+            # Example:
+            #   'html'        : '<li><span class="article">%s</span> <span class="author">%s</span></li>'
+            #   'article'     : ''
+            #   'author.name' : 'unknown'
+            #
+            # Assumes a result from the server looking like this:
+            #   {
+            #     article: 'My epic article.',
+            #     author: {
+            #       id: 1,
+            #       name: 'Jackie Chan'
+            #     }
+            #   }
+            resultDisplay:
+                'html': '<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>'
+                'qId': ''
+                'authorName': 'unknown'
+                'quote': ''
             
             # Text that is shown if no results are available.
             noResultsHtml: '<span class="noResults">Couldn\'t find anything... sorry =(</span>'
@@ -130,6 +152,17 @@ $.fn.extend
         # Simple logger.
         log = (msg) ->
             console?.log msg if settings.debug
+            
+            
+        #
+        # Helper function to determine size of objects.
+        #
+        objLength = (obj) ->
+            length = 0
+            for key of obj
+                length++ if obj.hasOwnProperty(key)
+                
+            return length
         
         
         # State trackers...
@@ -181,40 +214,40 @@ $.fn.extend
         #
         # Attach list with results to search object.
         #
-        attachList = (result, inputField) ->
-            if settings.resultDisplay[0].match(/%s/g).length isnt (settings.resultDisplay.length - 1)
+        attachList = (results, inputField) ->
+            if settings.resultDisplay.html.match(/%s/g).length isnt objLength(settings.resultDisplay) - 1
                 return false
             
             searchTerm = inputField.val()
             
             html = ""
-            for obj, index in result
-                thisHtml = settings.resultDisplay[0]
+            for result, index in results
+                thisHtml = settings.resultDisplay.html
 
                 # A non-global regex will perform the matches one-by-one.
-                for string, index in settings.resultDisplay
-                    continue if index is 0
+                for ajaxResultKeyToFind, fallbackValue of settings.resultDisplay
+                    continue if ajaxResultKeyToFind is 'html'
                     
-                    if string.indexOf(".") isnt -1
-                        keys = string.split(".")
-                        ajaxResultToMatch = obj[keys[0]]
+                    if ajaxResultKeyToFind.indexOf(".") isnt -1
+                        objValues = ajaxResultKeyToFind.split(".")
+                        ajaxResultToMatch = result[objValues[0]]
                     else
-                        ajaxResultToMatch = obj[string]
+                        ajaxResultToMatch = result[ajaxResultKeyToFind]
                     
-                    ajaxResultToMatch = "" if !ajaxResultToMatch?
+                    ajaxResultToMatch = fallbackValue if !ajaxResultToMatch?
                     
                     # If we're having nested objects, the result has to be able
                     # to resolve it.
                     if typeof ajaxResultToMatch is 'object'
                         # If it can't match, skip it.
-                        if keys? and ajaxResultToMatch[keys[1]]
+                        if objValues? and ajaxResultToMatch[objValues[1]]
                             newResultToMatch = ""
-                            currObj = ajaxResultToMatch[keys[1]]
-                            for key, index in keys
+                            currObj = ajaxResultToMatch[objValues[1]]
+                            for objValue, index in objValues
                                 if !currObj? or typeof currObj isnt 'object'
                                     break
 
-                                currObj = currObj[key]
+                                currObj = currObj[ajaxResultKeyToFind]
 
                             if currObj
                                 ajaxResultToMatch = currObj
