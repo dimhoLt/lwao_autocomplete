@@ -12,7 +12,11 @@
  http://en.wikipedia.org/wiki/MIT_License
  http://en.wikipedia.org/wiki/GNU_General_Public_License
  
- Compile through: $ coffee -bw -o js -c CoffeeScript/jquery.lwao.coffee
+ Compile through:
+ $ coffee -bw -o js -c CoffeeScript/jquery.lwao.coffee
+ 
+ Minify compiled JS through:
+ $ uglifyjs js/jquery.lwao.js -p js/jquery.lwao.min.js
 */
 
 $.fn.extend({
