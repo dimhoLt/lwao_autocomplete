@@ -74,9 +74,22 @@ $.fn.extend
             #   }
             resultDisplay:
                 'html': '<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>'
-                'qId': ''
-                'authorName': 'unknown'
-                'quote': ''
+                'replaces': [
+                    {
+                        'varName': 'qId'
+                        'fallback': ''
+                    }
+                    
+                    {
+                        'varName': 'authorName'
+                        'fallback': 'unknown'
+                    }
+                    
+                    {
+                        'varName': 'quote'
+                        'fallback': ''
+                    }
+                ]
             
             # Text that is shown if no results are available.
             noResultsHtml: '<span class="noResults">Couldn\'t find anything... sorry =(</span>'
@@ -156,17 +169,6 @@ $.fn.extend
         # Simple logger.
         log = (msg) ->
             console?.log msg if settings.debug
-            
-            
-        #
-        # Helper function to determine size of objects.
-        #
-        objLength = (obj) ->
-            length = 0
-            for key of obj
-                length++ if obj.hasOwnProperty(key)
-                
-            return length
         
         
         # State trackers...
@@ -219,7 +221,7 @@ $.fn.extend
         # Attach list with results to search object.
         #
         attachList = (results, inputField) ->
-            if settings.resultDisplay.html.match(/%s/g).length isnt objLength(settings.resultDisplay) - 1
+            if settings.resultDisplay.html.match(/%s/g).length isnt settings.resultDisplay.replaces.length
                 return false
             
             searchTerm = inputField.val()
@@ -229,16 +231,14 @@ $.fn.extend
                 thisHtml = settings.resultDisplay.html
 
                 # A non-global regex will perform the matches one-by-one.
-                for ajaxResultKeyToFind, fallbackValue of settings.resultDisplay
-                    continue if ajaxResultKeyToFind is 'html'
-                    
-                    if ajaxResultKeyToFind.indexOf(".") isnt -1
-                        objValues = ajaxResultKeyToFind.split(".")
+                for index, replace of settings.resultDisplay.replaces
+                    if replace.varName.indexOf(".") isnt -1
+                        objValues = replace.varName.split(".")
                         ajaxResultToMatch = result[objValues[0]]
                     else
-                        ajaxResultToMatch = result[ajaxResultKeyToFind]
+                        ajaxResultToMatch = result[replace.varName]
                     
-                    ajaxResultToMatch = fallbackValue if !ajaxResultToMatch?
+                    ajaxResultToMatch = replace.fallback if not ajaxResultToMatch?
                     
                     # If we're having nested objects, the result has to be able
                     # to resolve it.
@@ -251,7 +251,7 @@ $.fn.extend
                                 if !currObj? or typeof currObj isnt 'object'
                                     break
 
-                                currObj = currObj[ajaxResultKeyToFind]
+                                currObj = currObj[replace.varName]
 
                             if currObj
                                 ajaxResultToMatch = currObj

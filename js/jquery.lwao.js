@@ -21,7 +21,7 @@
 
 $.fn.extend({
   lwao: function(options) {
-    var attachList, evaluateAjax, hide, itemSelected, latestSearchTerm, log, objLength, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
+    var attachList, evaluateAjax, hide, itemSelected, latestSearchTerm, log, requestInProgress, requestTimeout, runAjax, settings, traverseResultList, traversingInProgress;
     settings = {
       minLength: 3,
       ajaxUrl: '',
@@ -32,9 +32,18 @@ $.fn.extend({
       responseResultVarName: 'result',
       resultDisplay: {
         'html': '<li><a href="/quote/%s"><span class="author">by %s</span><span class="quote">%s</span><span class=\"clearfix\"></span></a></li>',
-        'qId': '',
-        'authorName': 'unknown',
-        'quote': ''
+        'replaces': [
+          {
+            'varName': 'qId',
+            'fallback': ''
+          }, {
+            'varName': 'authorName',
+            'fallback': 'unknown'
+          }, {
+            'varName': 'quote',
+            'fallback': ''
+          }
+        ]
       },
       noResultsHtml: '<span class="noResults">Couldn\'t find anything... sorry =(</span>',
       container: $(".lwao_result"),
@@ -59,16 +68,6 @@ $.fn.extend({
       if (settings.debug) {
         return typeof console !== "undefined" && console !== null ? console.log(msg) : void 0;
       }
-    };
-    objLength = function(obj) {
-      var key, length;
-      length = 0;
-      for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          length++;
-        }
-      }
-      return length;
     };
     traversingInProgress = false;
     itemSelected = false;
@@ -97,8 +96,8 @@ $.fn.extend({
       return settings.backdrop.fadeOut(settings.fadeSpeed);
     };
     attachList = function(results, inputField) {
-      var ajaxResultKeyToFind, ajaxResultToMatch, currObj, endEllipsis, fallbackValue, html, index, initialEllipsis, newResultToMatch, objValue, objValues, result, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
-      if (settings.resultDisplay.html.match(/%s/g).length !== objLength(settings.resultDisplay) - 1) {
+      var ajaxResultToMatch, currObj, endEllipsis, html, index, initialEllipsis, newResultToMatch, objValue, objValues, replace, result, right, scrollTop, searchTerm, searchTermOccurenceIsBeyondView, searchTermOffset, searchTermRegex, substrLength, substrStartPoint, thisHtml, top, _i, _j, _len, _len1, _ref;
+      if (settings.resultDisplay.html.match(/%s/g).length !== settings.resultDisplay.replaces.length) {
         return false;
       }
       searchTerm = inputField.val();
@@ -106,20 +105,17 @@ $.fn.extend({
       for (index = _i = 0, _len = results.length; _i < _len; index = ++_i) {
         result = results[index];
         thisHtml = settings.resultDisplay.html;
-        _ref = settings.resultDisplay;
-        for (ajaxResultKeyToFind in _ref) {
-          fallbackValue = _ref[ajaxResultKeyToFind];
-          if (ajaxResultKeyToFind === 'html') {
-            continue;
-          }
-          if (ajaxResultKeyToFind.indexOf(".") !== -1) {
-            objValues = ajaxResultKeyToFind.split(".");
+        _ref = settings.resultDisplay.replaces;
+        for (index in _ref) {
+          replace = _ref[index];
+          if (replace.varName.indexOf(".") !== -1) {
+            objValues = replace.varName.split(".");
             ajaxResultToMatch = result[objValues[0]];
           } else {
-            ajaxResultToMatch = result[ajaxResultKeyToFind];
+            ajaxResultToMatch = result[replace.varName];
           }
           if (ajaxResultToMatch == null) {
-            ajaxResultToMatch = fallbackValue;
+            ajaxResultToMatch = replace.fallback;
           }
           if (typeof ajaxResultToMatch === 'object') {
             if ((objValues != null) && ajaxResultToMatch[objValues[1]]) {
@@ -130,7 +126,7 @@ $.fn.extend({
                 if ((currObj == null) || typeof currObj !== 'object') {
                   break;
                 }
-                currObj = currObj[ajaxResultKeyToFind];
+                currObj = currObj[replace.varName];
               }
               if (currObj) {
                 ajaxResultToMatch = currObj;
