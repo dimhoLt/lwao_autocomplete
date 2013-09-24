@@ -395,8 +395,6 @@ $.fn.extend
                         # Nope. It's just a regular string.
                         if response[settings.responseResultVarName]?
                             responseObjectToUse = response[settings.responseResultVarName]
-                            
-                        console.log responseObjectToUse
 
                         if responseObjectToUse? and responseObjectToUse.length > 0
                             attachList responseObjectToUse, inputField

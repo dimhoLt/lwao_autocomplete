@@ -243,7 +243,6 @@ $.fn.extend({
             if (response[settings.responseResultVarName] != null) {
               responseObjectToUse = response[settings.responseResultVarName];
             }
-            console.log(responseObjectToUse);
             if ((responseObjectToUse != null) && responseObjectToUse.length > 0) {
               return attachList(responseObjectToUse, inputField);
             } else {
