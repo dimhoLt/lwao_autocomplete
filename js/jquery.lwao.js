@@ -217,8 +217,38 @@ $.fn.extend({
           return latestSearchTerm = query;
         },
         success: function(response) {
-          if (response.status === 0 && (response[settings.responseResultVarName] != null) && response[settings.responseResultVarName].length > 0) {
-            return attachList(response[settings.responseResultVarName], inputField);
+          var currObject, index, objectName, objectNames, responseObjectToUse, _i, _len;
+          if (response.status === 0) {
+            if (settings.responseResultVarName.indexOf(".") !== -1) {
+              objectNames = settings.responseResultVarName.split(".");
+              if (response[objectNames[0]] != null) {
+                currObject = response[objectNames[0]];
+              } else {
+                settings.container.html(settings.noResultsHtml);
+                return;
+              }
+              for (index = _i = 0, _len = objectNames.length; _i < _len; index = ++_i) {
+                objectName = objectNames[index];
+                if (index === 0) {
+                  continue;
+                }
+                if (currObject[objectName] != null) {
+                  currObject = currObject[objectName];
+                  if (index === objectNames.length - 1) {
+                    responseObjectToUse = currObject;
+                  }
+                }
+              }
+            }
+            if (response[settings.responseResultVarName] != null) {
+              responseObjectToUse = response[settings.responseResultVarName];
+            }
+            console.log(responseObjectToUse);
+            if ((responseObjectToUse != null) && responseObjectToUse.length > 0) {
+              return attachList(responseObjectToUse, inputField);
+            } else {
+              return settings.container.html(settings.noResultsHtml);
+            }
           } else {
             return settings.container.html(settings.noResultsHtml);
           }

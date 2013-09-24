@@ -364,8 +364,45 @@ $.fn.extend
                     latestSearchTerm = query
 
                 success: (response) ->
-                    if response.status is 0 and response[settings.responseResultVarName]? and response[settings.responseResultVarName].length > 0
-                        attachList response[settings.responseResultVarName], inputField
+                    if response.status is 0
+                        # Now, check if we've actually supplied dot-separated
+                        # object selectors (e.g. "data.result").
+                        if settings.responseResultVarName.indexOf(".") isnt -1
+                            # We have. Find the names. This'd give the array
+                            # [ 'data', 'result' ] from the above example.
+                            objectNames = settings.responseResultVarName.split "."
+                            
+                            # Now, traverse them and see if we have the objects
+                            # supplied. The last object found will be assumed
+                            # the one to use. If none, the "noResultsHtml" will
+                            # be shown.
+                            if response[objectNames[0]]?
+                                currObject = response[objectNames[0]]
+                            else
+                                settings.container.html settings.noResultsHtml
+                                return
+                                
+                            for objectName, index in objectNames
+                                # Already checked above.
+                                continue if index is 0
+                                
+                                if currObject[objectName]?
+                                    currObject = currObject[objectName]
+                                    
+                                    if index is objectNames.length - 1
+                                        responseObjectToUse = currObject
+                                    
+                        # Nope. It's just a regular string.
+                        if response[settings.responseResultVarName]?
+                            responseObjectToUse = response[settings.responseResultVarName]
+                            
+                        console.log responseObjectToUse
+
+                        if responseObjectToUse? and responseObjectToUse.length > 0
+                            attachList responseObjectToUse, inputField
+                            
+                        else
+                            settings.container.html settings.noResultsHtml
                         
                     else
                         settings.container.html settings.noResultsHtml
