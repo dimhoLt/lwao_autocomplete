@@ -1,2 +1,3 @@
-nbproject
+syntax: glob
+.idea
 

@@ -417,7 +417,7 @@ $.fn.extend
         # Check if we should perform another AJAX-request.
         #
         evaluateAjax = (inputField) ->
-            query = inputField.val().trim()
+            query = $.trim inputField.val()
             
             if query.length < settings.minLength
                 settings.container.fadeOut settings.fadeSpeed

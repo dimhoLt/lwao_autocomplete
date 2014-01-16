@@ -259,7 +259,7 @@ $.fn.extend({
     };
     evaluateAjax = function(inputField) {
       var query;
-      query = inputField.val().trim();
+      query = $.trim(inputField.val());
       if (query.length < settings.minLength) {
         settings.container.fadeOut(settings.fadeSpeed);
         settings.backdrop.fadeOut(settings.fadeSpeed);
